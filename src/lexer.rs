@@ -58,7 +58,7 @@ fn new_token(t: token::Type, lit: &str) -> token::Token {
 }
 
 #[test]
-fn next_token() {
+fn tokenize1() {
     let input = "=+(){},;";
 
     let expects = [
