@@ -2,20 +2,20 @@ use crate::token;
 
 struct Lexer {
     input: Vec<char>,
-    position: usize,
-    read_position: usize,
+    pos: usize,
+    next_pos: usize,
     ch: char,
 }
 
 impl Lexer {
     fn read_char(&mut self) {
-        if self.read_position >= self.input.len() {
+        if self.next_pos >= self.input.len() {
             self.ch = '\0';
         } else {
-            self.ch = self.input[self.read_position];
+            self.ch = self.input[self.next_pos];
         }
-        self.position = self.read_position;
-        self.read_position += 1;
+        self.pos = self.next_pos;
+        self.next_pos += 1;
     }
 
     fn next_token(&mut self) -> token::Token {
@@ -56,19 +56,19 @@ impl Lexer {
     }
 
     fn read_identifier(&mut self) -> String {
-        let pos = self.position;
+        let pos = self.pos;
         while is_letter(self.ch) {
             self.read_char();
         }
-        self.extract_token(pos, self.position)
+        self.extract_token(pos, self.pos)
     }
 
     fn read_number(&mut self) -> String {
-        let pos = self.position;
+        let pos = self.pos;
         while is_digit(self.ch) {
             self.read_char();
         }
-        self.extract_token(pos, self.position)
+        self.extract_token(pos, self.pos)
     }
 
     // extract token by indexing [i..j) from self.input.
@@ -85,8 +85,8 @@ fn new(input: &str) -> Lexer {
 
     let mut l = Lexer {
         input: chars,
-        position: 0,
-        read_position: 0,
+        pos: 0,
+        next_pos: 0,
         ch: first_char,
     };
     l.read_char();
