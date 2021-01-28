@@ -76,7 +76,6 @@ impl Lexer {
         let token: String = self.input[i..j].iter().collect();
         token
     }
-
 }
 
 fn new(input: &str) -> Lexer {
