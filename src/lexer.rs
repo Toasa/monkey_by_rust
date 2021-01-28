@@ -56,19 +56,19 @@ impl Lexer {
     }
 
     fn read_identifier(&mut self) -> String {
-        let pos = self.pos;
+        let from = self.pos;
         while is_letter(self.ch) {
             self.read_char();
         }
-        self.extract_token(pos, self.pos)
+        self.extract_token(from, self.pos)
     }
 
     fn read_number(&mut self) -> String {
-        let pos = self.pos;
+        let from = self.pos;
         while is_digit(self.ch) {
             self.read_char();
         }
-        self.extract_token(pos, self.pos)
+        self.extract_token(from, self.pos)
     }
 
     // extract token by indexing [i..j) from self.input.
