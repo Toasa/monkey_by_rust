@@ -110,6 +110,16 @@ fn look_up_ident(ident: &String) -> token::Type {
         return token::Type::Function;
     } else if ident == "let" {
         return token::Type::Let;
+    } else if ident == "true" {
+        return token::Type::True;
+    } else if ident == "false" {
+        return token::Type::False;
+    } else if ident == "if" {
+        return token::Type::If;
+    } else if ident == "else" {
+        return token::Type::Else;
+    } else if ident == "return" {
+        return token::Type::Return;
     } else {
         return token::Type::Ident;
     }
@@ -165,7 +175,13 @@ fn tokenize2() {
 
         let result = add(five, ten);
         !-/*5;
-        5 < 10 > 5;";
+        5 < 10 > 5;
+
+        if (5 < 10) {
+            return true;
+        } else {
+            return false;
+        }";
 
     let expects = [
         new_token(token::Type::Let, "let"),
@@ -216,6 +232,23 @@ fn tokenize2() {
         new_token(token::Type::Gt, ">"),
         new_token(token::Type::Int, "5"),
         new_token(token::Type::Semicolon, ";"),
+        new_token(token::Type::If, "if"),
+        new_token(token::Type::Lparen, "("),
+        new_token(token::Type::Int, "5"),
+        new_token(token::Type::Lt, "<"),
+        new_token(token::Type::Int, "10"),
+        new_token(token::Type::Rparen, ")"),
+        new_token(token::Type::Lbrace, "{"),
+        new_token(token::Type::Return, "return"),
+        new_token(token::Type::True, "true"),
+        new_token(token::Type::Semicolon, ";"),
+        new_token(token::Type::Rbrace, "}"),
+        new_token(token::Type::Else, "else"),
+        new_token(token::Type::Lbrace, "{"),
+        new_token(token::Type::Return, "return"),
+        new_token(token::Type::False, "false"),
+        new_token(token::Type::Semicolon, ";"),
+        new_token(token::Type::Rbrace, "}"),
         new_token(token::Type::Eof, ""),
     ];
 

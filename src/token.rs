@@ -25,5 +25,10 @@ pub enum Type {
     Rbrace,
     Function,
     Let,
+    True,
+    False,
+    If,
+    Else,
+    Return,
 }
 
