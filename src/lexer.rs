@@ -28,6 +28,12 @@ impl Lexer {
             ')' => new_token(token::Type::Rparen, ")"),
             ',' => new_token(token::Type::Comma, ","),
             '+' => new_token(token::Type::Plus, "+"),
+            '-' => new_token(token::Type::Minus, "-"),
+            '!' => new_token(token::Type::Bang, "!"),
+            '/' => new_token(token::Type::Slash, "/"),
+            '*' => new_token(token::Type::Asterisk, "*"),
+            '<' => new_token(token::Type::Lt, "<"),
+            '>' => new_token(token::Type::Gt, ">"),
             '{' => new_token(token::Type::Lbrace, "{"),
             '}' => new_token(token::Type::Rbrace, "}"),
             '\0' => new_token(token::Type::Eof, ""),
@@ -157,7 +163,9 @@ fn tokenize2() {
             x + y;
         };
 
-        let result = add(five, ten);";
+        let result = add(five, ten);
+        !-/*5;
+        5 < 10 > 5;";
 
     let expects = [
         new_token(token::Type::Let, "let"),
@@ -195,6 +203,18 @@ fn tokenize2() {
         new_token(token::Type::Comma, ","),
         new_token(token::Type::Ident, "ten"),
         new_token(token::Type::Rparen, ")"),
+        new_token(token::Type::Semicolon, ";"),
+        new_token(token::Type::Bang, "!"),
+        new_token(token::Type::Minus, "-"),
+        new_token(token::Type::Slash, "/"),
+        new_token(token::Type::Asterisk, "*"),
+        new_token(token::Type::Int, "5"),
+        new_token(token::Type::Semicolon, ";"),
+        new_token(token::Type::Int, "5"),
+        new_token(token::Type::Lt, "<"),
+        new_token(token::Type::Int, "10"),
+        new_token(token::Type::Gt, ">"),
+        new_token(token::Type::Int, "5"),
         new_token(token::Type::Semicolon, ";"),
         new_token(token::Type::Eof, ""),
     ];
