@@ -137,6 +137,7 @@ fn tokenize1() {
         new_token(token::Type::Rbrace, "}"),
         new_token(token::Type::Comma, ","),
         new_token(token::Type::Semicolon, ";"),
+        new_token(token::Type::Eof, ""),
     ];
 
     let mut l = new(input);
@@ -195,6 +196,7 @@ fn tokenize2() {
         new_token(token::Type::Ident, "ten"),
         new_token(token::Type::Rparen, ")"),
         new_token(token::Type::Semicolon, ";"),
+        new_token(token::Type::Eof, ""),
     ];
 
     let mut l = new(input);
