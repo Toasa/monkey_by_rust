@@ -1,6 +1,6 @@
 use crate::token;
 
-struct Lexer {
+pub struct Lexer {
     input: Vec<char>,
     pos: usize,
     next_pos: usize,
@@ -18,7 +18,7 @@ impl Lexer {
         self.next_pos += 1;
     }
 
-    fn next_token(&mut self) -> token::Token {
+    pub fn next_token(&mut self) -> token::Token {
         self.skip_space();
 
         let tok: token::Token = match self.ch {
@@ -106,7 +106,7 @@ impl Lexer {
     }
 }
 
-fn new(input: &str) -> Lexer {
+pub fn new(input: &str) -> Lexer {
     let chars = input.chars().collect::<Vec<char>>();
     let first_char = chars[0];
 
