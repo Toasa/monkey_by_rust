@@ -22,14 +22,28 @@ impl Lexer {
         self.skip_space();
 
         let tok: token::Token = match self.ch {
-            '=' => new_token(token::Type::Assign, "="),
+            '=' => {
+                if self.peek_char() == '=' {
+                    self.read_char();
+                    new_token(token::Type::Equ, "==")
+                } else {
+                    new_token(token::Type::Assign, "=")
+                }
+            },
             ';' => new_token(token::Type::Semicolon, ";"),
             '(' => new_token(token::Type::Lparen, "("),
             ')' => new_token(token::Type::Rparen, ")"),
             ',' => new_token(token::Type::Comma, ","),
             '+' => new_token(token::Type::Plus, "+"),
             '-' => new_token(token::Type::Minus, "-"),
-            '!' => new_token(token::Type::Bang, "!"),
+            '!' => {
+                if self.peek_char() == '=' {
+                    self.read_char();
+                    new_token(token::Type::Neq, "!=")
+                } else {
+                    new_token(token::Type::Bang, "!")
+                }
+            },
             '/' => new_token(token::Type::Slash, "/"),
             '*' => new_token(token::Type::Asterisk, "*"),
             '<' => new_token(token::Type::Lt, "<"),
@@ -81,6 +95,14 @@ impl Lexer {
     fn extract_token(&mut self, i: usize, j: usize) -> String {
         let token: String = self.input[i..j].iter().collect();
         token
+    }
+
+    fn peek_char(&self) -> char {
+        if self.next_pos >= self.input.len() {
+            return '\0';
+        } else {
+            return self.input[self.next_pos];
+        }
     }
 }
 
@@ -181,7 +203,11 @@ fn tokenize2() {
             return true;
         } else {
             return false;
-        }";
+        }
+
+        10 == 10;
+        10 != 9;
+        ";
 
     let expects = [
         new_token(token::Type::Let, "let"),
@@ -249,6 +275,14 @@ fn tokenize2() {
         new_token(token::Type::False, "false"),
         new_token(token::Type::Semicolon, ";"),
         new_token(token::Type::Rbrace, "}"),
+        new_token(token::Type::Int, "10"),
+        new_token(token::Type::Equ, "=="),
+        new_token(token::Type::Int, "10"),
+        new_token(token::Type::Semicolon, ";"),
+        new_token(token::Type::Int, "10"),
+        new_token(token::Type::Neq, "!="),
+        new_token(token::Type::Int, "9"),
+        new_token(token::Type::Semicolon, ";"),
         new_token(token::Type::Eof, ""),
     ];
 

@@ -17,6 +17,8 @@ pub enum Type {
     Slash,
     Lt,
     Gt,
+    Equ,
+    Neq,
     Comma,
     Semicolon,
     Lparen,
