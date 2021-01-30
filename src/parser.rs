@@ -8,13 +8,13 @@ use crate::ast::{
 use crate::lexer;
 use crate::token;
 
-struct Parser<'a> {
+pub struct Parser<'a> {
     l: &'a mut lexer::Lexer,
     cur_token: token::Token,
     peek_token: token::Token,
 }
 
-fn new(l: &mut lexer::Lexer) -> Parser {
+pub fn new(l: &mut lexer::Lexer) -> Parser {
     let first_token = l.next_token();
     let second_token = l.next_token();
     let p = Parser{
@@ -26,7 +26,7 @@ fn new(l: &mut lexer::Lexer) -> Parser {
 }
 
 impl Parser<'_> {
-    fn parse_program(&mut self) -> Program {
+    pub fn parse_program(&mut self) -> Program {
         let stmts: Vec<Stmt> = vec![];
         let mut p = Program {
             stmts: stmts,
