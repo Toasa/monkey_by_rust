@@ -12,6 +12,7 @@ pub struct Parser<'a> {
     l: &'a mut lexer::Lexer,
     cur_token: token::Token,
     peek_token: token::Token,
+    errors: Vec<String>,
 }
 
 pub fn new(l: &mut lexer::Lexer) -> Parser {
@@ -21,6 +22,7 @@ pub fn new(l: &mut lexer::Lexer) -> Parser {
         l: l,
         cur_token: first_token,
         peek_token: second_token,
+        errors: vec![],
     };
     p
 }
@@ -96,11 +98,19 @@ impl Parser<'_> {
     }
 
     fn expect_peek(&mut self, t: token::Type) -> bool {
-        if self.peek_token_is(t) {
+        if self.peek_token_is(t.clone()) {
             self.next_token();
             return true;
         }
+        self.peek_error(t);
         return false;
+    }
+
+    fn peek_error(&mut self, t: token::Type) {
+        let msg = format!(
+            "expected peek token: {:?}, but got: {:?}", t, self.peek_token.t
+        );
+        self.errors.push(msg);
     }
 }
 
@@ -115,6 +125,7 @@ fn let_stmts() {
 
     let program = p.parse_program();
 
+    assert_eq!(p.errors.len(), 0);
     assert_eq!(program.stmts.len(), 3);
 
     let idents = [
