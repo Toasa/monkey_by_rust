@@ -3,6 +3,7 @@ use crate::ast::{
     Stmt,
     Expr,
     Let,
+    Return,
     Ident,
 };
 use crate::lexer;
@@ -52,6 +53,9 @@ impl Parser<'_> {
                 }
                 return None;
             },
+            token::Type::Return => {
+                return Some(Stmt::Return(self.parse_return_stmt()));
+            },
             _ => return None,
         };
     }
@@ -82,6 +86,19 @@ impl Parser<'_> {
         }
 
         return Some(stmt);
+    }
+
+    fn parse_return_stmt(&mut self) -> Return {
+        let t = self.cur_token.clone();
+        self.next_token();
+
+        while !self.cur_token_is(token::Type::Semicolon) {
+            self.next_token();
+        }
+        let ret = Return {
+            token: t,
+        };
+        return ret;
     }
 
     fn next_token(&mut self) {
@@ -140,6 +157,34 @@ fn let_stmts() {
                 assert_eq!(ls.name.token.literal, idents[i]);
             },
             _ => panic!("We parsed other than let statement."),
+        }
+    }
+}
+
+#[test]
+fn return_stmts() {
+    let input = "return 5;
+        return 10;
+        return 993322;";
+
+    let mut l = lexer::new(input);
+    let mut p = new(&mut l);
+
+    let program = p.parse_program();
+
+    assert_eq!(p.errors.len(), 0);
+    assert_eq!(program.stmts.len(), 3);
+
+    let vals = [
+        "5", "10", "993322"
+    ];
+
+    for (i, stmt) in program.stmts.iter().enumerate() {
+        match stmt {
+            Stmt::Return(rs) => {
+                assert_eq!(rs.token.literal, "return");
+            },
+            _ => panic!("We parsed other than return statement."),
         }
     }
 }
