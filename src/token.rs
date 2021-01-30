@@ -1,9 +1,10 @@
+#[derive(Clone)]
 pub struct Token {
     pub t: Type,
     pub literal: String,
 }
 
-#[derive(PartialOrd, PartialEq, Debug)]
+#[derive(PartialOrd, PartialEq, Debug, Clone)]
 pub enum Type {
     Illegal,
     Eof,
