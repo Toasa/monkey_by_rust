@@ -1,4 +1,7 @@
-use crate::token;
+use crate::token::{
+    Token,
+    Type,
+};
 
 pub struct Lexer {
     input: Vec<char>,
@@ -18,39 +21,39 @@ impl Lexer {
         self.next_pos += 1;
     }
 
-    pub fn next_token(&mut self) -> token::Token {
+    pub fn next_token(&mut self) -> Token {
         self.skip_space();
 
-        let tok: token::Token = match self.ch {
+        let tok: Token = match self.ch {
             '=' => {
                 if self.peek_char() == '=' {
                     self.read_char();
-                    new_token(token::Type::Equ, "==")
+                    new_token(Type::Equ, "==")
                 } else {
-                    new_token(token::Type::Assign, "=")
+                    new_token(Type::Assign, "=")
                 }
             },
-            ';' => new_token(token::Type::Semicolon, ";"),
-            '(' => new_token(token::Type::Lparen, "("),
-            ')' => new_token(token::Type::Rparen, ")"),
-            ',' => new_token(token::Type::Comma, ","),
-            '+' => new_token(token::Type::Plus, "+"),
-            '-' => new_token(token::Type::Minus, "-"),
+            ';' => new_token(Type::Semicolon, ";"),
+            '(' => new_token(Type::Lparen, "("),
+            ')' => new_token(Type::Rparen, ")"),
+            ',' => new_token(Type::Comma, ","),
+            '+' => new_token(Type::Plus, "+"),
+            '-' => new_token(Type::Minus, "-"),
             '!' => {
                 if self.peek_char() == '=' {
                     self.read_char();
-                    new_token(token::Type::Neq, "!=")
+                    new_token(Type::Neq, "!=")
                 } else {
-                    new_token(token::Type::Bang, "!")
+                    new_token(Type::Bang, "!")
                 }
             },
-            '/' => new_token(token::Type::Slash, "/"),
-            '*' => new_token(token::Type::Asterisk, "*"),
-            '<' => new_token(token::Type::Lt, "<"),
-            '>' => new_token(token::Type::Gt, ">"),
-            '{' => new_token(token::Type::Lbrace, "{"),
-            '}' => new_token(token::Type::Rbrace, "}"),
-            '\0' => new_token(token::Type::Eof, ""),
+            '/' => new_token(Type::Slash, "/"),
+            '*' => new_token(Type::Asterisk, "*"),
+            '<' => new_token(Type::Lt, "<"),
+            '>' => new_token(Type::Gt, ">"),
+            '{' => new_token(Type::Lbrace, "{"),
+            '}' => new_token(Type::Rbrace, "}"),
+            '\0' => new_token(Type::Eof, ""),
             _ => {
                 if is_letter(self.ch) {
                     let lit = &self.read_identifier();
@@ -58,9 +61,9 @@ impl Lexer {
                     return new_token(t, lit);
                 } else if is_digit(self.ch) {
                     let lit = &self.read_number();
-                    return new_token(token::Type::Int, lit);
+                    return new_token(Type::Int, lit);
                 } else {
-                    new_token(token::Type::Illegal, &self.ch.to_string())
+                    new_token(Type::Illegal, &self.ch.to_string())
                 }
             },
         };
@@ -120,30 +123,30 @@ pub fn new(input: &str) -> Lexer {
     return l;
 }
 
-fn new_token(t: token::Type, lit: &str) -> token::Token {
-    return token::Token {
+fn new_token(t: Type, lit: &str) -> Token {
+    return Token {
         t: t,
         literal: String::from(lit),
     };
 }
 
-fn look_up_ident(ident: &String) -> token::Type {
+fn look_up_ident(ident: &String) -> Type {
     if ident == "fn" {
-        return token::Type::Function;
+        return Type::Function;
     } else if ident == "let" {
-        return token::Type::Let;
+        return Type::Let;
     } else if ident == "true" {
-        return token::Type::True;
+        return Type::True;
     } else if ident == "false" {
-        return token::Type::False;
+        return Type::False;
     } else if ident == "if" {
-        return token::Type::If;
+        return Type::If;
     } else if ident == "else" {
-        return token::Type::Else;
+        return Type::Else;
     } else if ident == "return" {
-        return token::Type::Return;
+        return Type::Return;
     } else {
-        return token::Type::Ident;
+        return Type::Ident;
     }
 }
 
@@ -167,15 +170,15 @@ fn tokenize1() {
     let input = "=+(){},;";
 
     let expects = [
-        new_token(token::Type::Assign, "="),
-        new_token(token::Type::Plus, "+"),
-        new_token(token::Type::Lparen, "("),
-        new_token(token::Type::Rparen, ")"),
-        new_token(token::Type::Lbrace, "{"),
-        new_token(token::Type::Rbrace, "}"),
-        new_token(token::Type::Comma, ","),
-        new_token(token::Type::Semicolon, ";"),
-        new_token(token::Type::Eof, ""),
+        new_token(Type::Assign, "="),
+        new_token(Type::Plus, "+"),
+        new_token(Type::Lparen, "("),
+        new_token(Type::Rparen, ")"),
+        new_token(Type::Lbrace, "{"),
+        new_token(Type::Rbrace, "}"),
+        new_token(Type::Comma, ","),
+        new_token(Type::Semicolon, ";"),
+        new_token(Type::Eof, ""),
     ];
 
     let mut l = new(input);
@@ -210,80 +213,80 @@ fn tokenize2() {
         ";
 
     let expects = [
-        new_token(token::Type::Let, "let"),
-        new_token(token::Type::Ident, "five"),
-        new_token(token::Type::Assign, "="),
-        new_token(token::Type::Int, "5"),
-        new_token(token::Type::Semicolon, ";"),
-        new_token(token::Type::Let, "let"),
-        new_token(token::Type::Ident, "ten"),
-        new_token(token::Type::Assign, "="),
-        new_token(token::Type::Int, "10"),
-        new_token(token::Type::Semicolon, ";"),
-        new_token(token::Type::Let, "let"),
-        new_token(token::Type::Ident, "add"),
-        new_token(token::Type::Assign, "="),
-        new_token(token::Type::Function, "fn"),
-        new_token(token::Type::Lparen, "("),
-        new_token(token::Type::Ident, "x"),
-        new_token(token::Type::Comma, ","),
-        new_token(token::Type::Ident, "y"),
-        new_token(token::Type::Rparen, ")"),
-        new_token(token::Type::Lbrace, "{"),
-        new_token(token::Type::Ident, "x"),
-        new_token(token::Type::Plus, "+"),
-        new_token(token::Type::Ident, "y"),
-        new_token(token::Type::Semicolon, ";"),
-        new_token(token::Type::Rbrace, "}"),
-        new_token(token::Type::Semicolon, ";"),
-        new_token(token::Type::Let, "let"),
-        new_token(token::Type::Ident, "result"),
-        new_token(token::Type::Assign, "="),
-        new_token(token::Type::Ident, "add"),
-        new_token(token::Type::Lparen, "("),
-        new_token(token::Type::Ident, "five"),
-        new_token(token::Type::Comma, ","),
-        new_token(token::Type::Ident, "ten"),
-        new_token(token::Type::Rparen, ")"),
-        new_token(token::Type::Semicolon, ";"),
-        new_token(token::Type::Bang, "!"),
-        new_token(token::Type::Minus, "-"),
-        new_token(token::Type::Slash, "/"),
-        new_token(token::Type::Asterisk, "*"),
-        new_token(token::Type::Int, "5"),
-        new_token(token::Type::Semicolon, ";"),
-        new_token(token::Type::Int, "5"),
-        new_token(token::Type::Lt, "<"),
-        new_token(token::Type::Int, "10"),
-        new_token(token::Type::Gt, ">"),
-        new_token(token::Type::Int, "5"),
-        new_token(token::Type::Semicolon, ";"),
-        new_token(token::Type::If, "if"),
-        new_token(token::Type::Lparen, "("),
-        new_token(token::Type::Int, "5"),
-        new_token(token::Type::Lt, "<"),
-        new_token(token::Type::Int, "10"),
-        new_token(token::Type::Rparen, ")"),
-        new_token(token::Type::Lbrace, "{"),
-        new_token(token::Type::Return, "return"),
-        new_token(token::Type::True, "true"),
-        new_token(token::Type::Semicolon, ";"),
-        new_token(token::Type::Rbrace, "}"),
-        new_token(token::Type::Else, "else"),
-        new_token(token::Type::Lbrace, "{"),
-        new_token(token::Type::Return, "return"),
-        new_token(token::Type::False, "false"),
-        new_token(token::Type::Semicolon, ";"),
-        new_token(token::Type::Rbrace, "}"),
-        new_token(token::Type::Int, "10"),
-        new_token(token::Type::Equ, "=="),
-        new_token(token::Type::Int, "10"),
-        new_token(token::Type::Semicolon, ";"),
-        new_token(token::Type::Int, "10"),
-        new_token(token::Type::Neq, "!="),
-        new_token(token::Type::Int, "9"),
-        new_token(token::Type::Semicolon, ";"),
-        new_token(token::Type::Eof, ""),
+        new_token(Type::Let, "let"),
+        new_token(Type::Ident, "five"),
+        new_token(Type::Assign, "="),
+        new_token(Type::Int, "5"),
+        new_token(Type::Semicolon, ";"),
+        new_token(Type::Let, "let"),
+        new_token(Type::Ident, "ten"),
+        new_token(Type::Assign, "="),
+        new_token(Type::Int, "10"),
+        new_token(Type::Semicolon, ";"),
+        new_token(Type::Let, "let"),
+        new_token(Type::Ident, "add"),
+        new_token(Type::Assign, "="),
+        new_token(Type::Function, "fn"),
+        new_token(Type::Lparen, "("),
+        new_token(Type::Ident, "x"),
+        new_token(Type::Comma, ","),
+        new_token(Type::Ident, "y"),
+        new_token(Type::Rparen, ")"),
+        new_token(Type::Lbrace, "{"),
+        new_token(Type::Ident, "x"),
+        new_token(Type::Plus, "+"),
+        new_token(Type::Ident, "y"),
+        new_token(Type::Semicolon, ";"),
+        new_token(Type::Rbrace, "}"),
+        new_token(Type::Semicolon, ";"),
+        new_token(Type::Let, "let"),
+        new_token(Type::Ident, "result"),
+        new_token(Type::Assign, "="),
+        new_token(Type::Ident, "add"),
+        new_token(Type::Lparen, "("),
+        new_token(Type::Ident, "five"),
+        new_token(Type::Comma, ","),
+        new_token(Type::Ident, "ten"),
+        new_token(Type::Rparen, ")"),
+        new_token(Type::Semicolon, ";"),
+        new_token(Type::Bang, "!"),
+        new_token(Type::Minus, "-"),
+        new_token(Type::Slash, "/"),
+        new_token(Type::Asterisk, "*"),
+        new_token(Type::Int, "5"),
+        new_token(Type::Semicolon, ";"),
+        new_token(Type::Int, "5"),
+        new_token(Type::Lt, "<"),
+        new_token(Type::Int, "10"),
+        new_token(Type::Gt, ">"),
+        new_token(Type::Int, "5"),
+        new_token(Type::Semicolon, ";"),
+        new_token(Type::If, "if"),
+        new_token(Type::Lparen, "("),
+        new_token(Type::Int, "5"),
+        new_token(Type::Lt, "<"),
+        new_token(Type::Int, "10"),
+        new_token(Type::Rparen, ")"),
+        new_token(Type::Lbrace, "{"),
+        new_token(Type::Return, "return"),
+        new_token(Type::True, "true"),
+        new_token(Type::Semicolon, ";"),
+        new_token(Type::Rbrace, "}"),
+        new_token(Type::Else, "else"),
+        new_token(Type::Lbrace, "{"),
+        new_token(Type::Return, "return"),
+        new_token(Type::False, "false"),
+        new_token(Type::Semicolon, ";"),
+        new_token(Type::Rbrace, "}"),
+        new_token(Type::Int, "10"),
+        new_token(Type::Equ, "=="),
+        new_token(Type::Int, "10"),
+        new_token(Type::Semicolon, ";"),
+        new_token(Type::Int, "10"),
+        new_token(Type::Neq, "!="),
+        new_token(Type::Int, "9"),
+        new_token(Type::Semicolon, ";"),
+        new_token(Type::Eof, ""),
     ];
 
     let mut l = new(input);

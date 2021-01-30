@@ -1,4 +1,10 @@
-use crate::ast;
+use crate::ast::{
+    Program,
+    Stmt,
+    Expr,
+    Let,
+    Ident,
+};
 use crate::lexer;
 use crate::token;
 
@@ -20,9 +26,9 @@ fn new(l: &mut lexer::Lexer) -> Parser {
 }
 
 impl Parser<'_> {
-    fn parse_program(&mut self) -> ast::Program {
-        let stmts: Vec<ast::Stmt> = vec![];
-        let mut p = ast::Program {
+    fn parse_program(&mut self) -> Program {
+        let stmts: Vec<Stmt> = vec![];
+        let mut p = Program {
             stmts: stmts,
         };
 
@@ -36,11 +42,11 @@ impl Parser<'_> {
         return p;
     }
 
-    fn parse_stmt(&mut self) -> Option<ast::Stmt> {
+    fn parse_stmt(&mut self) -> Option<Stmt> {
         match self.cur_token.t {
             token::Type::Let => {
                 if let Some(ls) = self.parse_let_stmt() {
-                    return Some(ast::Stmt::Let(ls));
+                    return Some(Stmt::Let(ls));
                 }
                 return None;
             },
@@ -48,19 +54,19 @@ impl Parser<'_> {
         };
     }
 
-    fn parse_let_stmt(&mut self) -> Option<ast::Let> {
+    fn parse_let_stmt(&mut self) -> Option<Let> {
         let t = self.cur_token.clone();
 
         if !self.expect_peek(token::Type::Ident) {
             return None;
         }
 
-        let ident = ast::Ident {
+        let ident = Ident {
             token: self.cur_token.clone(),
             val: self.cur_token.clone().literal,
         };
 
-        let stmt = ast::Let {
+        let stmt = Let {
             token: t,
             name: ident,
         };
@@ -117,7 +123,7 @@ fn let_stmts() {
 
     for (i, stmt) in program.stmts.iter().enumerate() {
         match stmt {
-            ast::Stmt::Let(ls) => {
+            Stmt::Let(ls) => {
                 assert_eq!(ls.token.literal, "let");
                 assert_eq!(ls.name.val, idents[i]);
                 assert_eq!(ls.name.token.literal, idents[i]);
