@@ -6,6 +6,7 @@ use crate::ast::{
     Return,
     ExprStmt,
     Ident,
+    Int,
 };
 use crate::lexer;
 use crate::token;
@@ -135,6 +136,12 @@ impl Parser<'_> {
         return Expr::Ident(id);
     }
 
+    fn parse_int(&mut self) -> Int {
+        let t = self.cur_token.clone();
+        let n: isize = t.clone().literal.parse().unwrap();
+        return Int{ token: t, val: n };
+    }
+
     fn next_token(&mut self) {
         self.cur_token = self.peek_token.clone();
         self.peek_token = self.l.next_token();
@@ -165,7 +172,11 @@ impl Parser<'_> {
     }
 
     fn prefix_parse(&mut self, t: token::Type) -> Expr {
-        return self.parse_ident();
+        if t == token::Type::Ident {
+            return self.parse_ident();
+        } else {
+            return Expr::Int(self.parse_int());
+        }
     }
 }
 
@@ -248,5 +259,32 @@ fn ident_expr() {
         Expr::Ident(id) => {
             assert_eq!(id.val, "foobar");
         }
+        _ => panic!("We parsed other than identifer."),
+    }
+}
+
+#[test]
+fn int_expr() {
+    let input = "5;";
+
+    let mut l = lexer::new(input);
+    let mut p = new(&mut l);
+    let program = p.parse_program();
+
+    assert_eq!(p.errors.len(), 0);
+    assert_eq!(program.stmts.len(), 1);
+
+    let stmt = &program.stmts[0];
+    let es = match stmt {
+        Stmt::ExprStmt(es) => es,
+        _ => panic!("We parsed other than expression statement."),
+    };
+
+    assert_eq!(es.token.literal, "5");
+    match &es.expr {
+        Expr::Int(i) => {
+            assert_eq!(i.val, 5);
+        }
+        _ => panic!("We parsed other than integer."),
     }
 }

@@ -14,6 +14,7 @@ pub enum Stmt {
 
 pub enum Expr {
     Ident(Ident),
+    Int(Int),
 }
 
 pub struct Program {
@@ -39,4 +40,9 @@ pub struct ExprStmt {
 pub struct Ident {
     pub token: token::Token,
     pub val: String,
+}
+
+pub struct Int {
+    pub token: token::Token,
+    pub val: isize,
 }
