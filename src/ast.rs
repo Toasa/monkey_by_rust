@@ -9,6 +9,7 @@ enum Node {
 pub enum Stmt {
     Let(Let),
     Return(Return),
+    ExprStmt(ExprStmt),
 }
 
 pub enum Expr {
@@ -28,6 +29,11 @@ pub struct Let {
 pub struct Return {
     pub token: token::Token,
     // pub val: Expr,
+}
+
+pub struct ExprStmt {
+    pub token: token::Token,
+    pub expr: Expr,
 }
 
 pub struct Ident {

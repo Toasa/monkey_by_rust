@@ -4,6 +4,7 @@ use crate::ast::{
     Expr,
     Let,
     Return,
+    ExprStmt,
     Ident,
 };
 use crate::lexer;
@@ -14,6 +15,17 @@ pub struct Parser<'a> {
     cur_token: token::Token,
     peek_token: token::Token,
     errors: Vec<String>,
+}
+
+#[derive(PartialOrd, PartialEq)]
+enum Precedence {
+    Lowest,
+    Equals, // ==
+    Lt,     // <, >, <=, >=
+    Add,    // + or -
+    Mul,    // * or /
+    Prefix, // -x or !x
+    Call,   // func(x)
 }
 
 pub fn new(l: &mut lexer::Lexer) -> Parser {
@@ -56,7 +68,9 @@ impl Parser<'_> {
             token::Type::Return => {
                 return Some(Stmt::Return(self.parse_return_stmt()));
             },
-            _ => return None,
+            _ => {
+                return Some(Stmt::ExprStmt(self.parse_expr_stmt()));
+            },
         };
     }
 
@@ -101,6 +115,26 @@ impl Parser<'_> {
         return ret;
     }
 
+    fn parse_expr_stmt(&mut self) -> ExprStmt {
+        let t = self.cur_token.clone();
+        let expr = self.parse_expr(Precedence::Lowest);
+
+        if self.peek_token_is(token::Type::Semicolon) {
+            self.next_token();
+        }
+        return ExprStmt{ token: t, expr: expr };
+    }
+
+    fn parse_expr(&mut self, prec: Precedence) -> Expr {
+        return self.prefix_parse(self.cur_token.clone().t);
+    }
+
+    fn parse_ident(&mut self) -> Expr {
+        let t = self.cur_token.clone();
+        let id = Ident{ token: t.clone(), val: t.literal };
+        return Expr::Ident(id);
+    }
+
     fn next_token(&mut self) {
         self.cur_token = self.peek_token.clone();
         self.peek_token = self.l.next_token();
@@ -129,7 +163,12 @@ impl Parser<'_> {
         );
         self.errors.push(msg);
     }
+
+    fn prefix_parse(&mut self, t: token::Type) -> Expr {
+        return self.parse_ident();
+    }
 }
+
 
 #[test]
 fn let_stmts() {
@@ -139,7 +178,6 @@ fn let_stmts() {
 
     let mut l = lexer::new(input);
     let mut p = new(&mut l);
-
     let program = p.parse_program();
 
     assert_eq!(p.errors.len(), 0);
@@ -169,7 +207,6 @@ fn return_stmts() {
 
     let mut l = lexer::new(input);
     let mut p = new(&mut l);
-
     let program = p.parse_program();
 
     assert_eq!(p.errors.len(), 0);
@@ -185,6 +222,31 @@ fn return_stmts() {
                 assert_eq!(rs.token.literal, "return");
             },
             _ => panic!("We parsed other than return statement."),
+        }
+    }
+}
+
+#[test]
+fn ident_expr() {
+    let input = "foobar;";
+
+    let mut l = lexer::new(input);
+    let mut p = new(&mut l);
+    let program = p.parse_program();
+
+    assert_eq!(p.errors.len(), 0);
+    assert_eq!(program.stmts.len(), 1);
+
+    let stmt = &program.stmts[0];
+    let es = match stmt {
+        Stmt::ExprStmt(es) => es,
+        _ => panic!("We parsed other than expression statement."),
+    };
+
+    assert_eq!(es.token.literal, "foobar");
+    match &es.expr {
+        Expr::Ident(id) => {
+            assert_eq!(id.val, "foobar");
         }
     }
 }
