@@ -7,6 +7,7 @@ use crate::ast::{
     ExprStmt,
     Ident,
     Int,
+    Prefix,
 };
 use crate::lexer;
 use crate::token;
@@ -126,6 +127,14 @@ impl Parser<'_> {
         return Int{ token: t, val: n };
     }
 
+    fn parse_prefix(&mut self) -> Prefix {
+        let t = self.cur_token.clone();
+        let op = self.cur_token.clone().literal;
+        self.next_token();
+        let rhs = self.parse_expr(Precedence::Prefix);
+        return Prefix{ token: t, op: op, rhs: Box::new(rhs) };
+    }
+
     fn next_token(&mut self) {
         self.cur_token = self.peek_token.clone();
         self.peek_token = self.l.next_token();
@@ -156,10 +165,14 @@ impl Parser<'_> {
     }
 
     fn prefix_parse(&mut self, t: token::Type) -> Expr {
-        if t == token::Type::Ident {
-            return Expr::Ident(self.parse_ident());
-        } else {
-            return Expr::Int(self.parse_int());
+        match t {
+            token::Type::Ident => {
+                return Expr::Ident(self.parse_ident());
+            },
+            token::Type::Minus | token::Type::Bang => {
+                return Expr::Prefix(self.parse_prefix());
+            },
+            _ => return Expr::Int(self.parse_int()),
         }
     }
 }
@@ -270,5 +283,39 @@ fn int_expr() {
             assert_eq!(i.val, 5);
         }
         _ => panic!("We parsed other than integer."),
+    }
+}
+
+#[test]
+fn prefix_expr() {
+    let inputs = vec![ "!5;", "-15;" ];
+    let expect_prefixes = vec![ "!", "-" ];
+    let expect_ints = vec![ 5, 15 ];
+
+    for (i, input) in inputs.iter().enumerate() {
+        let mut l = lexer::new(input);
+        let mut p = new(&mut l);
+        let program = p.parse_program();
+
+        assert_eq!(p.errors.len(), 0);
+        assert_eq!(program.stmts.len(), 1);
+
+        let stmt = &program.stmts[0];
+        let es = match stmt {
+            Stmt::ExprStmt(es) => es,
+            _ => panic!("We parsed other than expression statement."),
+        };
+
+        let pre = match &es.expr {
+            Expr::Prefix(pre) => pre,
+            _ => panic!("We parsed other than prefix expression."),
+        };
+
+        assert_eq!(pre.op, expect_prefixes[i]);
+
+        match &*pre.rhs {
+            Expr::Int(num) => assert_eq!(num.val, expect_ints[i]),
+            _ => panic!("We parsed other than integer."),
+        }
     }
 }
