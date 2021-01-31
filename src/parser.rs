@@ -50,37 +50,24 @@ impl Parser<'_> {
 
         while self.cur_token.t != token::Type::Eof {
             let stmt = self.parse_stmt();
-            if let Some(s) = stmt {
-                p.stmts.push(s);
-            }
+            p.stmts.push(stmt);
             self.next_token();
         }
         return p;
     }
 
-    fn parse_stmt(&mut self) -> Option<Stmt> {
-        match self.cur_token.t {
-            token::Type::Let => {
-                if let Some(ls) = self.parse_let_stmt() {
-                    return Some(Stmt::Let(ls));
-                }
-                return None;
-            },
-            token::Type::Return => {
-                return Some(Stmt::Return(self.parse_return_stmt()));
-            },
-            _ => {
-                return Some(Stmt::ExprStmt(self.parse_expr_stmt()));
-            },
+    fn parse_stmt(&mut self) -> Stmt {
+        return match self.cur_token.t {
+            token::Type::Let => Stmt::Let(self.parse_let_stmt()),
+            token::Type::Return => Stmt::Return(self.parse_return_stmt()),
+            _ => Stmt::ExprStmt(self.parse_expr_stmt()),
         };
     }
 
-    fn parse_let_stmt(&mut self) -> Option<Let> {
+    fn parse_let_stmt(&mut self) -> Let {
         let t = self.cur_token.clone();
 
-        if !self.expect_peek(token::Type::Ident) {
-            return None;
-        }
+        let _ = self.expect_peek(token::Type::Ident);
 
         let ident = Ident {
             token: self.cur_token.clone(),
@@ -92,15 +79,13 @@ impl Parser<'_> {
             name: ident,
         };
 
-        if !self.expect_peek(token::Type::Assign) {
-            return None;
-        }
+        let _ = self.expect_peek(token::Type::Assign);
 
         while !self.cur_token_is(token::Type::Semicolon) {
             self.next_token();
         }
 
-        return Some(stmt);
+        return stmt;
     }
 
     fn parse_return_stmt(&mut self) -> Return {
