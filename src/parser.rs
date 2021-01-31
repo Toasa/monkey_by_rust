@@ -130,10 +130,9 @@ impl Parser<'_> {
         return self.prefix_parse(self.cur_token.clone().t);
     }
 
-    fn parse_ident(&mut self) -> Expr {
+    fn parse_ident(&mut self) -> Ident {
         let t = self.cur_token.clone();
-        let id = Ident{ token: t.clone(), val: t.literal };
-        return Expr::Ident(id);
+        return Ident{ token: t.clone(), val: t.literal };
     }
 
     fn parse_int(&mut self) -> Int {
@@ -173,7 +172,7 @@ impl Parser<'_> {
 
     fn prefix_parse(&mut self, t: token::Type) -> Expr {
         if t == token::Type::Ident {
-            return self.parse_ident();
+            return Expr::Ident(self.parse_ident());
         } else {
             return Expr::Int(self.parse_int());
         }
