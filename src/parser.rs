@@ -8,6 +8,7 @@ use crate::ast::{
     Ident,
     Int,
     Prefix,
+    Infix,
 };
 use crate::lexer;
 use crate::token;
@@ -113,7 +114,25 @@ impl Parser<'_> {
     }
 
     fn parse_expr(&mut self, prec: Precedence) -> Expr {
-        return self.prefix_parse(self.cur_token.clone().t);
+        let mut lhs = self.prefix_parse(self.cur_token.clone().t);
+
+        while !self.peek_token_is(token::Type::Semicolon) &&
+            prec < self.peek_precedence() {
+
+            // TODO:: extract a function
+            match self.peek_token.clone().t {
+                token::Type::Plus | token::Type::Minus |
+                token::Type::Slash | token::Type::Asterisk |
+                token::Type::Equ | token::Type::Neq |
+                token::Type::Lt | token::Type::Gt
+                => {
+                    self.next_token();
+                    lhs = Expr::Infix(self.parse_infix(lhs));
+                },
+                _ => return lhs,
+            }
+        }
+        return lhs;
     }
 
     fn parse_ident(&mut self) -> Ident {
@@ -135,6 +154,20 @@ impl Parser<'_> {
         return Prefix{ token: t, op: op, rhs: Box::new(rhs) };
     }
 
+    fn parse_infix(&mut self, lhs: Expr) -> Infix {
+        let t = self.cur_token.clone();
+        let op = self.cur_token.clone().literal;
+        let prec = self.cur_precedence();
+        self.next_token();
+        let rhs = self.parse_expr(prec);
+        return Infix {
+            token: t,
+            lhs: Box::new(lhs),
+            op: op,
+            rhs: Box::new(rhs),
+        };
+    }
+
     fn next_token(&mut self) {
         self.cur_token = self.peek_token.clone();
         self.peek_token = self.l.next_token();
@@ -146,6 +179,14 @@ impl Parser<'_> {
 
     fn peek_token_is(&self, t: token::Type) -> bool {
         return self.peek_token.t == t;
+    }
+
+    fn cur_precedence(&self) -> Precedence {
+        return to_precedence(self.cur_token.clone().t);
+    }
+
+    fn peek_precedence(&self) -> Precedence {
+        return to_precedence(self.peek_token.clone().t);
     }
 
     fn expect_peek(&mut self, t: token::Type) -> bool {
@@ -177,6 +218,19 @@ impl Parser<'_> {
     }
 }
 
+fn to_precedence(t: token::Type) -> Precedence {
+    return match t {
+        token::Type::Equ | token::Type::Neq
+            => Precedence::Equals,
+        token::Type::Lt | token::Type::Gt
+            => Precedence::Lt,
+        token::Type::Plus | token::Type::Minus
+            => Precedence::Add,
+        token::Type::Slash | token::Type::Asterisk
+            => Precedence::Mul,
+        _ => Precedence::Lowest,
+    };
+}
 
 #[test]
 fn let_stmts() {
@@ -287,7 +341,7 @@ fn int_expr() {
 }
 
 #[test]
-fn prefix_expr() {
+fn prefix_exprs() {
     let inputs = vec![ "!5;", "-15;" ];
     let expect_prefixes = vec![ "!", "-" ];
     let expect_ints = vec![ 5, 15 ];
@@ -317,5 +371,60 @@ fn prefix_expr() {
             Expr::Int(num) => assert_eq!(num.val, expect_ints[i]),
             _ => panic!("We parsed other than integer."),
         }
+    }
+}
+
+#[test]
+fn infix_exprs() {
+    struct Test<'a> {
+        input: &'a str,
+        lhs: isize,
+        op: &'a str,
+        rhs: isize,
+    }
+
+    let tests: Vec<Test> = vec![
+        Test { input: "5+5;", lhs: 5, op: "+", rhs: 5 },
+        Test { input: "5-5;", lhs: 5, op: "-", rhs: 5 },
+        Test { input: "5*5;", lhs: 5, op: "*", rhs: 5 },
+        Test { input: "5/5;", lhs: 5, op: "/", rhs: 5 },
+        Test { input: "5>5;", lhs: 5, op: ">", rhs: 5 },
+        Test { input: "5<5;", lhs: 5, op: "<", rhs: 5 },
+        Test { input: "5==5;", lhs: 5, op: "==", rhs: 5 },
+        Test { input: "5!=5;", lhs: 5, op: "!=", rhs: 5 },
+    ];
+
+    for test in tests.iter() {
+        let mut l = lexer::new(&test.input);
+        let mut p = new(&mut l);
+        let program = p.parse_program();
+
+        assert_eq!(p.errors.len(), 0);
+        assert_eq!(program.stmts.len(), 1);
+
+        let stmt = &program.stmts[0];
+        let es = match stmt {
+            Stmt::ExprStmt(es) => es,
+            _ => panic!("We parsed other than expression statement."),
+        };
+
+        let i = match &es.expr {
+            Expr::Infix(i) => i,
+            _ => panic!("We parsed other than infix expression."),
+        };
+
+        let lhs = match &*(i.lhs) {
+            Expr::Int(int) => int.val,
+            _ => panic!("We parsed other than integer."),
+        };
+
+        let rhs = match &*(i.rhs) {
+            Expr::Int(int) => int.val,
+            _ => panic!("We parsed other than integer."),
+        };
+
+        assert_eq!(lhs, test.lhs);
+        assert_eq!(i.op, test.op);
+        assert_eq!(rhs, test.rhs);
     }
 }

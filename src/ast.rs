@@ -16,6 +16,7 @@ pub enum Expr {
     Ident(Ident),
     Int(Int),
     Prefix(Prefix),
+    Infix(Infix),
 }
 
 pub struct Program {
@@ -50,6 +51,13 @@ pub struct Int {
 
 pub struct Prefix {
     pub token: token::Token,
+    pub op: String,
+    pub rhs: Box<Expr>,
+}
+
+pub struct Infix {
+    pub token: token::Token,
+    pub lhs: Box<Expr>,
     pub op: String,
     pub rhs: Box<Expr>,
 }
