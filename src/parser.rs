@@ -34,13 +34,12 @@ enum Precedence {
 pub fn new(l: &mut lexer::Lexer) -> Parser {
     let first_token = l.next_token();
     let second_token = l.next_token();
-    let p = Parser{
+    Parser {
         l: l,
         cur_token: first_token,
         peek_token: second_token,
         errors: vec![],
-    };
-    p
+    }
 }
 
 impl Parser<'_> {
@@ -55,7 +54,7 @@ impl Parser<'_> {
             p.stmts.push(stmt);
             self.next_token();
         }
-        return p;
+        p
     }
 
     fn parse_stmt(&mut self) -> Stmt {
@@ -86,8 +85,7 @@ impl Parser<'_> {
         while !self.cur_token_is(token::Type::Semicolon) {
             self.next_token();
         }
-
-        return stmt;
+        stmt
     }
 
     fn parse_return_stmt(&mut self) -> Return {
@@ -97,10 +95,7 @@ impl Parser<'_> {
         while !self.cur_token_is(token::Type::Semicolon) {
             self.next_token();
         }
-        let ret = Return {
-            token: t,
-        };
-        return ret;
+        Return { token: t }
     }
 
     fn parse_expr_stmt(&mut self) -> ExprStmt {
@@ -110,7 +105,7 @@ impl Parser<'_> {
         if self.peek_token_is(token::Type::Semicolon) {
             self.next_token();
         }
-        return ExprStmt{ token: t, expr: expr };
+        ExprStmt { token: t, expr: expr }
     }
 
     fn parse_expr(&mut self, prec: Precedence) -> Expr {
@@ -132,18 +127,18 @@ impl Parser<'_> {
                 _ => return lhs,
             }
         }
-        return lhs;
+        lhs
     }
 
     fn parse_ident(&mut self) -> Ident {
         let t = self.cur_token.clone();
-        return Ident{ token: t.clone(), val: t.literal };
+        Ident { token: t.clone(), val: t.literal }
     }
 
     fn parse_int(&mut self) -> Int {
         let t = self.cur_token.clone();
         let n: isize = t.clone().literal.parse().unwrap();
-        return Int{ token: t, val: n };
+        Int { token: t, val: n }
     }
 
     fn parse_prefix(&mut self) -> Prefix {
@@ -151,7 +146,7 @@ impl Parser<'_> {
         let op = self.cur_token.clone().literal;
         self.next_token();
         let rhs = self.parse_expr(Precedence::Prefix);
-        return Prefix{ token: t, op: op, rhs: Box::new(rhs) };
+        Prefix { token: t, op: op, rhs: Box::new(rhs) }
     }
 
     fn parse_infix(&mut self, lhs: Expr) -> Infix {
@@ -160,12 +155,12 @@ impl Parser<'_> {
         let prec = self.cur_precedence();
         self.next_token();
         let rhs = self.parse_expr(prec);
-        return Infix {
+        Infix {
             token: t,
             lhs: Box::new(lhs),
             op: op,
             rhs: Box::new(rhs),
-        };
+        }
     }
 
     fn next_token(&mut self) {
@@ -195,7 +190,7 @@ impl Parser<'_> {
             return true;
         }
         self.peek_error(t);
-        return false;
+        false
     }
 
     fn peek_error(&mut self, t: token::Type) {

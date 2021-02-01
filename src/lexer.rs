@@ -69,7 +69,7 @@ impl Lexer {
         };
 
         self.read_char();
-        return tok;
+        tok
     }
 
     fn skip_space(&mut self) {
@@ -120,7 +120,7 @@ pub fn new(input: &str) -> Lexer {
         ch: first_char,
     };
     l.read_char();
-    return l;
+    l
 }
 
 fn new_token(t: Type, lit: &str) -> Token {
