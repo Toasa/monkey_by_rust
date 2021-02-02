@@ -361,13 +361,7 @@ fn ident_expr() {
         _ => panic!("We parsed other than expression statement."),
     };
 
-    assert_eq!(es.token.literal, "foobar");
-    match &es.expr {
-        Expr::Ident(id) => {
-            assert_eq!(id.val, "foobar");
-        }
-        _ => panic!("We parsed other than identifer."),
-    }
+    test_ident(&es.expr, "foobar");
 }
 
 #[test]
@@ -387,13 +381,7 @@ fn int_expr() {
         _ => panic!("We parsed other than expression statement."),
     };
 
-    assert_eq!(es.token.literal, "5");
-    match &es.expr {
-        Expr::Int(i) => {
-            assert_eq!(i.val, 5);
-        }
-        _ => panic!("We parsed other than integer."),
-    }
+    test_int(&es.expr, 5);
 }
 
 #[test]
@@ -484,11 +472,7 @@ fn prefix_exprs() {
         };
 
         assert_eq!(pre.op, expect_prefixes[i]);
-
-        match &*pre.rhs {
-            Expr::Int(num) => assert_eq!(num.val, expect_ints[i]),
-            _ => panic!("We parsed other than integer."),
-        }
+        test_int(&*pre.rhs, expect_ints[i]);
     }
 }
 
@@ -531,19 +515,9 @@ fn infix_exprs() {
             _ => panic!("We parsed other than infix expression."),
         };
 
-        let lhs = match &*(i.lhs) {
-            Expr::Int(int) => int.val,
-            _ => panic!("We parsed other than integer."),
-        };
-
-        let rhs = match &*(i.rhs) {
-            Expr::Int(int) => int.val,
-            _ => panic!("We parsed other than integer."),
-        };
-
-        assert_eq!(lhs, test.lhs);
+        test_int(&*(i.lhs), test.lhs);
+        test_int(&*(i.rhs), test.rhs);
         assert_eq!(i.op, test.op);
-        assert_eq!(rhs, test.rhs);
     }
 }
 
@@ -605,4 +579,18 @@ fn operator_precedence() {
         let stmt_str = format!("{}", stmt);
         assert_eq!(stmt_str, test.expected);
     }
+}
+
+fn test_int(n: &Expr, expected: isize) {
+    match n {
+        Expr::Int(int) => assert_eq!(int.val, expected),
+        _ => panic!("We parsed other than integer."),
+    };
+}
+
+fn test_ident(ident: &Expr, expected: &str) {
+    match ident {
+        Expr::Ident(id) => assert_eq!(id.val, expected),
+        _ => panic!("We parsed other than identifer."),
+    };
 }
