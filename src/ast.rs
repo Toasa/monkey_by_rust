@@ -17,6 +17,7 @@ pub enum Expr {
     Int(Int),
     Prefix(Prefix),
     Infix(Infix),
+    Boolean(Boolean),
 }
 
 pub struct Program {
@@ -60,4 +61,9 @@ pub struct Infix {
     pub lhs: Box<Expr>,
     pub op: String,
     pub rhs: Box<Expr>,
+}
+
+pub struct Boolean {
+    pub token: token::Token,
+    pub val: bool,
 }

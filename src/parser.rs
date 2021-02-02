@@ -9,6 +9,7 @@ use crate::ast::{
     Int,
     Prefix,
     Infix,
+    Boolean,
 };
 use crate::lexer;
 use crate::token;
@@ -141,6 +142,13 @@ impl Parser<'_> {
         Int { token: t, val: n }
     }
 
+    fn parse_boolean(&mut self) -> Boolean {
+        let t = self.cur_token.clone();
+        let b: bool = if self.cur_token.clone().literal == "true"
+            { true } else { false };
+        Boolean { token:t , val: b}
+    }
+
     fn parse_prefix(&mut self) -> Prefix {
         let t = self.cur_token.clone();
         let op = self.cur_token.clone().literal;
@@ -207,6 +215,9 @@ impl Parser<'_> {
             },
             token::Type::Minus | token::Type::Bang => {
                 return Expr::Prefix(self.parse_prefix());
+            },
+            token::Type::True | token::Type::False => {
+                return Expr::Boolean(self.parse_boolean());
             },
             _ => return Expr::Int(self.parse_int()),
         }
@@ -332,6 +343,32 @@ fn int_expr() {
             assert_eq!(i.val, 5);
         }
         _ => panic!("We parsed other than integer."),
+    }
+}
+
+#[test]
+fn boolean_expr() {
+    let inputs = vec![ "true;", "false;"];
+    let expects = vec![ true, false ];
+
+    for (i, input) in inputs.iter().enumerate() {
+        let mut l = lexer::new(input);
+        let mut p = new(&mut l);
+        let program = p.parse_program();
+
+        assert_eq!(p.errors.len(), 0);
+        assert_eq!(program.stmts.len(), 1);
+
+        let stmt = &program.stmts[0];
+        let es = match stmt {
+            Stmt::ExprStmt(es) => es,
+            _ => panic!("We parsed other than expression statement."),
+        };
+
+        match &es.expr {
+            Expr::Boolean(b) => assert_eq!(b.val, expects[i]),
+            _ => panic!("We parsed other than boolean expression."),
+        }
     }
 }
 
