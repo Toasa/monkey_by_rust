@@ -149,6 +149,13 @@ impl Parser<'_> {
         Boolean { token:t , val: b}
     }
 
+    fn parse_grouped_expr(&mut self) -> Expr {
+        self.next_token();
+        let e = self.parse_expr(Precedence::Lowest);
+        let _ = self.expect_peek(token::Type::Rparen);
+        e
+    }
+
     fn parse_prefix(&mut self) -> Prefix {
         let t = self.cur_token.clone();
         let op = self.cur_token.clone().literal;
@@ -212,6 +219,9 @@ impl Parser<'_> {
         return match t {
             token::Type::Ident => {
                 Expr::Ident(self.parse_ident())
+            },
+            token::Type::Lparen => {
+                self.parse_grouped_expr()
             },
             token::Type::Minus | token::Type::Bang => {
                 Expr::Prefix(self.parse_prefix())
