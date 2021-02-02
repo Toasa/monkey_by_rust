@@ -209,18 +209,18 @@ impl Parser<'_> {
     }
 
     fn prefix_parse(&mut self, t: token::Type) -> Expr {
-        match t {
+        return match t {
             token::Type::Ident => {
-                return Expr::Ident(self.parse_ident());
+                Expr::Ident(self.parse_ident())
             },
             token::Type::Minus | token::Type::Bang => {
-                return Expr::Prefix(self.parse_prefix());
+                Expr::Prefix(self.parse_prefix())
             },
             token::Type::True | token::Type::False => {
-                return Expr::Boolean(self.parse_boolean());
+                Expr::Boolean(self.parse_boolean())
             },
-            _ => return Expr::Int(self.parse_int()),
-        }
+            _ => Expr::Int(self.parse_int()),
+        };
     }
 }
 
