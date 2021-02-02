@@ -5,11 +5,13 @@ use crate::ast::{
     Let,
     Return,
     ExprStmt,
+    Block,
     Ident,
     Int,
     Prefix,
     Infix,
     Boolean,
+    If,
 };
 use crate::lexer;
 use crate::token;
@@ -109,6 +111,21 @@ impl Parser<'_> {
         ExprStmt { token: t, expr: expr }
     }
 
+    fn parse_block(&mut self) -> Block {
+        let mut stmts: Vec<Stmt> = vec![];
+
+        let t = self.cur_token.clone();
+        self.next_token();
+
+        while !self.cur_token_is(token::Type::Rbrace) &&
+              !self.cur_token_is(token::Type::Eof) {
+            let stmt = self.parse_stmt();
+            stmts.push(stmt);
+            self.next_token();
+        }
+        Block { token: t, stmts: stmts }
+    }
+
     fn parse_expr(&mut self, prec: Precedence) -> Expr {
         let mut lhs = self.prefix_parse(self.cur_token.clone().t);
 
@@ -140,6 +157,26 @@ impl Parser<'_> {
         let t = self.cur_token.clone();
         let n: isize = t.clone().literal.parse().unwrap();
         Int { token: t, val: n }
+    }
+
+    fn parse_if(&mut self) -> If {
+        let t = self.cur_token.clone();
+        self.expect_peek(token::Type::Lparen);
+        self.next_token();
+        let cond = self.parse_expr(Precedence::Lowest);
+        let _ = self.expect_peek(token::Type::Rparen);
+        let _ = self.expect_peek(token::Type::Lbrace);
+        let cons = self.parse_block();
+
+        let has_alt = self.peek_token_is(token::Type::Else);
+
+        let alt: Option<Block> = if has_alt {
+            self.next_token();
+            let _ = self.expect_peek(token::Type::Lbrace);
+            Some(self.parse_block())
+        } else { None };
+
+        If { token: t, cond: Box::new(cond), cons: cons, alt: alt }
     }
 
     fn parse_boolean(&mut self) -> Boolean {
@@ -222,6 +259,9 @@ impl Parser<'_> {
             },
             token::Type::Lparen => {
                 self.parse_grouped_expr()
+            },
+            token::Type::If => {
+                Expr::If(self.parse_if())
             },
             token::Type::Minus | token::Type::Bang => {
                 Expr::Prefix(self.parse_prefix())
@@ -378,6 +418,42 @@ fn boolean_expr() {
         match &es.expr {
             Expr::Boolean(b) => assert_eq!(b.val, expects[i]),
             _ => panic!("We parsed other than boolean expression."),
+        }
+    }
+}
+
+#[test]
+fn if_expr() {
+    let inputs= vec![
+        "if (x < y) { x };",
+        "if (x < y) { x } else { y };"
+    ];
+
+    let has_alt = vec![ false, true ];
+
+    for (i, input) in inputs.iter().enumerate() {
+        let mut l = lexer::new(input);
+        let mut p = new(&mut l);
+        let program = p.parse_program();
+
+        assert_eq!(p.errors.len(), 0);
+        assert_eq!(program.stmts.len(), 1);
+
+        let stmt = &program.stmts[0];
+        let es = match stmt {
+            Stmt::ExprStmt(es) => es,
+            _ => panic!("We parsed other than expression statement."),
+        };
+
+        let ifstmt = match &es.expr {
+            Expr::If(i) => i,
+            _ => panic!("We parsed other than integer."),
+        };
+
+        if has_alt[i] {
+            assert!(ifstmt.alt.is_some());
+        } else {
+            assert!(ifstmt.alt.is_none());
         }
     }
 }

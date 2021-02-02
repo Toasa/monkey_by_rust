@@ -11,6 +11,7 @@ pub enum Stmt {
     Let(Let),
     Return(Return),
     ExprStmt(ExprStmt),
+    Block(Block),
 }
 
 impl fmt::Display for Stmt {
@@ -19,6 +20,7 @@ impl fmt::Display for Stmt {
             Stmt::Let(l) => format!("{}", l),
             Stmt::Return(r) => format!("{}", r),
             Stmt::ExprStmt(es) => format!("{}", es),
+            Stmt::Block(b) => format!("{}", b),
         };
         write!(f, "{}", s)
     }
@@ -30,6 +32,7 @@ pub enum Expr {
     Prefix(Prefix),
     Infix(Infix),
     Boolean(Boolean),
+    If(If),
 }
 
 impl fmt::Display for Expr {
@@ -40,6 +43,7 @@ impl fmt::Display for Expr {
             Expr::Prefix(p) => format!("{}", p),
             Expr::Infix(i) => format!("{}", i),
             Expr::Boolean(b) => format!("{}", b),
+            Expr::If(i) => format!("{}", i),
         };
         write!(f, "{}", s)
     }
@@ -82,6 +86,20 @@ pub struct ExprStmt {
 impl fmt::Display for ExprStmt {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.expr)
+    }
+}
+
+pub struct Block {
+    pub token: token::Token,
+    pub stmts: Vec<Stmt>,
+}
+
+impl fmt::Display for Block {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for stmt in &self.stmts {
+            write!(f, "{}", stmt)?;
+        }
+        Ok(())
     }
 }
 
@@ -140,5 +158,22 @@ pub struct Boolean {
 impl fmt::Display for Boolean {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.val)
+    }
+}
+
+pub struct If {
+    pub token: token::Token,
+    pub cond: Box<Expr>,
+    pub cons: Block,
+    pub alt: Option<Block>,
+}
+
+impl fmt::Display for If {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "if {} {}", self.cond, self.cons);
+        if let Some(alt) = &self.alt {
+            write!(f, "{}", alt);
+        }
+        Ok(())
     }
 }
