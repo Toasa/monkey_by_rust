@@ -470,3 +470,63 @@ fn infix_exprs() {
         assert_eq!(rhs, test.rhs);
     }
 }
+
+#[test]
+fn operator_precedence() {
+    struct Test<'a> {
+        input: &'a str,
+        expected: &'a str,
+    }
+
+    let tests: Vec<Test> = vec![
+        Test {
+            input: "true",
+            expected: "true"
+        },
+        Test {
+            input: "false",
+            expected: "false"
+        },
+        Test {
+            input: "3 > 5 == false",
+            expected: "((3 > 5) == false)"
+        },
+        Test {
+            input: "3 < 5 == true",
+            expected: "((3 < 5) == true)"
+        },
+        Test {
+            input: "1 + (2 + 3) + 4",
+            expected: "((1 + (2 + 3)) + 4)"
+        },
+        Test {
+            input: "(2 + 5) * 4",
+            expected: "((2 + 5) * 4)"
+        },
+        Test {
+            input: "2 / (5 + 4)",
+            expected: "(2 / (5 + 4))"
+        },
+        Test {
+            input: "-(5 + 4)",
+            expected: "(-(5 + 4))"
+        },
+        Test {
+            input: "!(true + true)",
+            expected: "(!(true + true))"
+        },
+    ];
+
+    for test in tests.iter() {
+        let mut l = lexer::new(&test.input);
+        let mut p = new(&mut l);
+        let program = p.parse_program();
+
+        assert_eq!(p.errors.len(), 0);
+        assert_eq!(program.stmts.len(), 1);
+
+        let stmt = &program.stmts[0];
+        let stmt_str = format!("{}", stmt);
+        assert_eq!(stmt_str, test.expected);
+    }
+}
