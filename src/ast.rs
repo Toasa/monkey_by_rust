@@ -60,13 +60,12 @@ pub struct Program {
 pub struct Let {
     pub token: token::Token,
     pub name: Ident,
-    // val: Expr,
+    pub val: Expr,
 }
 
 impl fmt::Display for Let {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // write!(f, "let {} = {};", self.name, self.val)
-        write!(f, "let {};", self.name)
+        write!(f, "let {} = {};", self.name, self.val)
     }
 }
 

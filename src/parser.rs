@@ -80,17 +80,15 @@ impl Parser<'_> {
             val: self.cur_token.clone().literal,
         };
 
-        let stmt = Let {
-            token: t,
-            name: ident,
-        };
-
         let _ = self.expect_peek(token::Type::Assign);
+        self.next_token();
+        let val = self.parse_expr(Precedence::Lowest);
 
-        while !self.cur_token_is(token::Type::Semicolon) {
+        if self.peek_token_is(token::Type::Semicolon) {
             self.next_token();
         }
-        stmt
+
+        Let { token: t, name: ident, val: val }
     }
 
     fn parse_return_stmt(&mut self) -> Return {
@@ -365,12 +363,15 @@ fn let_stmts() {
         "x", "y", "foobar"
     ];
 
+    let exprs = [ 5, 10, 838383 ];
+
     for (i, stmt) in program.stmts.iter().enumerate() {
         match stmt {
             Stmt::Let(ls) => {
                 assert_eq!(ls.token.literal, "let");
                 assert_eq!(ls.name.val, idents[i]);
                 assert_eq!(ls.name.token.literal, idents[i]);
+                test_int(&ls.val, exprs[i]);
             },
             _ => panic!("We parsed other than let statement."),
         }
