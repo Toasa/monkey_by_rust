@@ -57,6 +57,15 @@ pub struct Program {
     pub stmts: Vec<Stmt>,
 }
 
+impl fmt::Display for Program {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for stmt in &self.stmts {
+            write!(f, "{}", stmt);
+        }
+        Ok(())
+    }
+}
+
 pub struct Let {
     pub token: token::Token,
     pub name: Ident,
