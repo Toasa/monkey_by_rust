@@ -12,6 +12,7 @@ use crate::ast::{
     Infix,
     Boolean,
     If,
+    Func,
 };
 use crate::lexer;
 use crate::token;
@@ -179,6 +180,32 @@ impl Parser<'_> {
         If { token: t, cond: Box::new(cond), cons: cons, alt: alt }
     }
 
+    fn parse_func(&mut self) -> Func {
+        let t = self.cur_token.clone();
+        let _ = self.expect_peek(token::Type::Lparen);
+        let params = self.parse_func_params();
+        let _ = self.expect_peek(token::Type::Lbrace);
+        let body = self.parse_block();
+        Func { token: t, params: params, body: body }
+    }
+
+    fn parse_func_params(&mut self) -> Vec<Ident> {
+        let mut params: Vec<Ident> = vec![];
+        self.next_token();
+        while !self.cur_token_is(token::Type::Rparen) {
+            let param = self.parse_ident();
+            params.push(param);
+
+            // skip identifier
+            self.next_token();
+
+            if self.cur_token_is(token::Type::Comma) {
+                self.next_token();
+            }
+        }
+        params
+    }
+
     fn parse_boolean(&mut self) -> Boolean {
         let t = self.cur_token.clone();
         let b: bool = if self.cur_token.clone().literal == "true"
@@ -262,6 +289,9 @@ impl Parser<'_> {
             },
             token::Type::If => {
                 Expr::If(self.parse_if())
+            },
+            token::Type::Function => {
+                Expr::Func(self.parse_func())
             },
             token::Type::Minus | token::Type::Bang => {
                 Expr::Prefix(self.parse_prefix())
@@ -444,6 +474,32 @@ fn if_expr() {
             assert!(ifstmt.alt.is_none());
         }
     }
+}
+
+#[test]
+fn fn_expr() {
+    let input = "fn(x, y) { x + y; }";
+
+    let mut l = lexer::new(input);
+    let mut p = new(&mut l);
+    let program = p.parse_program();
+
+    assert_eq!(p.errors.len(), 0);
+    assert_eq!(program.stmts.len(), 1);
+
+    let stmt = &program.stmts[0];
+    let es = match stmt {
+        Stmt::ExprStmt(es) => es,
+        _ => panic!("We parsed other than expression statement."),
+    };
+
+    let f = match &es.expr {
+        Expr::Func(f) => f,
+        _ => panic!("We parsed other than function expression."),
+    };
+
+    assert_eq!(f.params[0].val, "x");
+    assert_eq!(f.params[1].val, "y");
 }
 
 #[test]

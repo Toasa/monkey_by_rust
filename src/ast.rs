@@ -33,6 +33,7 @@ pub enum Expr {
     Infix(Infix),
     Boolean(Boolean),
     If(If),
+    Func(Func),
 }
 
 impl fmt::Display for Expr {
@@ -44,6 +45,7 @@ impl fmt::Display for Expr {
             Expr::Infix(i) => format!("{}", i),
             Expr::Boolean(b) => format!("{}", b),
             Expr::If(i) => format!("{}", i),
+            Expr::Func(f) => format!("{}", f),
         };
         write!(f, "{}", s)
     }
@@ -175,5 +177,23 @@ impl fmt::Display for If {
             write!(f, "{}", alt);
         }
         Ok(())
+    }
+}
+
+pub struct Func {
+    pub token: token::Token,
+    pub params: Vec<Ident>,
+    pub body: Block,
+}
+
+impl fmt::Display for Func {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "fn");
+        write!(f, "(");
+        for param in &self.params {
+            write!(f, "{}", param);
+        }
+        write!(f, ")");
+        write!(f, "{}", self.body)
     }
 }
