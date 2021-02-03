@@ -165,134 +165,139 @@ fn is_space(c: char) -> bool {
            c == '\n' || c == '\r'
 }
 
-#[test]
-fn tokenize1() {
-    let input = "=+(){},;";
+#[cfg(test)]
+mod test {
+    use super::*;
 
-    let expects = [
-        new_token(Type::Assign, "="),
-        new_token(Type::Plus, "+"),
-        new_token(Type::Lparen, "("),
-        new_token(Type::Rparen, ")"),
-        new_token(Type::Lbrace, "{"),
-        new_token(Type::Rbrace, "}"),
-        new_token(Type::Comma, ","),
-        new_token(Type::Semicolon, ";"),
-        new_token(Type::Eof, ""),
-    ];
+    #[test]
+    fn tokenize1() {
+        let input = "=+(){},;";
 
-    let mut l = new(input);
-    for expect in expects.iter() {
-        let tok = l.next_token();
-        assert_eq!(tok.t, expect.t);
-        assert_eq!(tok.literal, expect.literal);
-    }
-}
+        let expects = [
+            new_token(Type::Assign, "="),
+            new_token(Type::Plus, "+"),
+            new_token(Type::Lparen, "("),
+            new_token(Type::Rparen, ")"),
+            new_token(Type::Lbrace, "{"),
+            new_token(Type::Rbrace, "}"),
+            new_token(Type::Comma, ","),
+            new_token(Type::Semicolon, ";"),
+            new_token(Type::Eof, ""),
+        ];
 
-#[test]
-fn tokenize2() {
-    let input = "let five = 5;
-        let ten = 10;
-
-        let add = fn(x, y) {
-            x + y;
-        };
-
-        let result = add(five, ten);
-        !-/*5;
-        5 < 10 > 5;
-
-        if (5 < 10) {
-            return true;
-        } else {
-            return false;
+        let mut l = new(input);
+        for expect in expects.iter() {
+            let tok = l.next_token();
+            assert_eq!(tok.t, expect.t);
+            assert_eq!(tok.literal, expect.literal);
         }
+    }
 
-        10 == 10;
-        10 != 9;
-        ";
+    #[test]
+    fn tokenize2() {
+        let input = "let five = 5;
+            let ten = 10;
 
-    let expects = [
-        new_token(Type::Let, "let"),
-        new_token(Type::Ident, "five"),
-        new_token(Type::Assign, "="),
-        new_token(Type::Int, "5"),
-        new_token(Type::Semicolon, ";"),
-        new_token(Type::Let, "let"),
-        new_token(Type::Ident, "ten"),
-        new_token(Type::Assign, "="),
-        new_token(Type::Int, "10"),
-        new_token(Type::Semicolon, ";"),
-        new_token(Type::Let, "let"),
-        new_token(Type::Ident, "add"),
-        new_token(Type::Assign, "="),
-        new_token(Type::Function, "fn"),
-        new_token(Type::Lparen, "("),
-        new_token(Type::Ident, "x"),
-        new_token(Type::Comma, ","),
-        new_token(Type::Ident, "y"),
-        new_token(Type::Rparen, ")"),
-        new_token(Type::Lbrace, "{"),
-        new_token(Type::Ident, "x"),
-        new_token(Type::Plus, "+"),
-        new_token(Type::Ident, "y"),
-        new_token(Type::Semicolon, ";"),
-        new_token(Type::Rbrace, "}"),
-        new_token(Type::Semicolon, ";"),
-        new_token(Type::Let, "let"),
-        new_token(Type::Ident, "result"),
-        new_token(Type::Assign, "="),
-        new_token(Type::Ident, "add"),
-        new_token(Type::Lparen, "("),
-        new_token(Type::Ident, "five"),
-        new_token(Type::Comma, ","),
-        new_token(Type::Ident, "ten"),
-        new_token(Type::Rparen, ")"),
-        new_token(Type::Semicolon, ";"),
-        new_token(Type::Bang, "!"),
-        new_token(Type::Minus, "-"),
-        new_token(Type::Slash, "/"),
-        new_token(Type::Asterisk, "*"),
-        new_token(Type::Int, "5"),
-        new_token(Type::Semicolon, ";"),
-        new_token(Type::Int, "5"),
-        new_token(Type::Lt, "<"),
-        new_token(Type::Int, "10"),
-        new_token(Type::Gt, ">"),
-        new_token(Type::Int, "5"),
-        new_token(Type::Semicolon, ";"),
-        new_token(Type::If, "if"),
-        new_token(Type::Lparen, "("),
-        new_token(Type::Int, "5"),
-        new_token(Type::Lt, "<"),
-        new_token(Type::Int, "10"),
-        new_token(Type::Rparen, ")"),
-        new_token(Type::Lbrace, "{"),
-        new_token(Type::Return, "return"),
-        new_token(Type::True, "true"),
-        new_token(Type::Semicolon, ";"),
-        new_token(Type::Rbrace, "}"),
-        new_token(Type::Else, "else"),
-        new_token(Type::Lbrace, "{"),
-        new_token(Type::Return, "return"),
-        new_token(Type::False, "false"),
-        new_token(Type::Semicolon, ";"),
-        new_token(Type::Rbrace, "}"),
-        new_token(Type::Int, "10"),
-        new_token(Type::Equ, "=="),
-        new_token(Type::Int, "10"),
-        new_token(Type::Semicolon, ";"),
-        new_token(Type::Int, "10"),
-        new_token(Type::Neq, "!="),
-        new_token(Type::Int, "9"),
-        new_token(Type::Semicolon, ";"),
-        new_token(Type::Eof, ""),
-    ];
+            let add = fn(x, y) {
+                x + y;
+            };
 
-    let mut l = new(input);
-    for expect in expects.iter() {
-        let tok = l.next_token();
-        assert_eq!(tok.t, expect.t);
-        assert_eq!(tok.literal, expect.literal);
+            let result = add(five, ten);
+            !-/*5;
+            5 < 10 > 5;
+
+            if (5 < 10) {
+                return true;
+            } else {
+                return false;
+            }
+
+            10 == 10;
+            10 != 9;
+            ";
+
+        let expects = [
+            new_token(Type::Let, "let"),
+            new_token(Type::Ident, "five"),
+            new_token(Type::Assign, "="),
+            new_token(Type::Int, "5"),
+            new_token(Type::Semicolon, ";"),
+            new_token(Type::Let, "let"),
+            new_token(Type::Ident, "ten"),
+            new_token(Type::Assign, "="),
+            new_token(Type::Int, "10"),
+            new_token(Type::Semicolon, ";"),
+            new_token(Type::Let, "let"),
+            new_token(Type::Ident, "add"),
+            new_token(Type::Assign, "="),
+            new_token(Type::Function, "fn"),
+            new_token(Type::Lparen, "("),
+            new_token(Type::Ident, "x"),
+            new_token(Type::Comma, ","),
+            new_token(Type::Ident, "y"),
+            new_token(Type::Rparen, ")"),
+            new_token(Type::Lbrace, "{"),
+            new_token(Type::Ident, "x"),
+            new_token(Type::Plus, "+"),
+            new_token(Type::Ident, "y"),
+            new_token(Type::Semicolon, ";"),
+            new_token(Type::Rbrace, "}"),
+            new_token(Type::Semicolon, ";"),
+            new_token(Type::Let, "let"),
+            new_token(Type::Ident, "result"),
+            new_token(Type::Assign, "="),
+            new_token(Type::Ident, "add"),
+            new_token(Type::Lparen, "("),
+            new_token(Type::Ident, "five"),
+            new_token(Type::Comma, ","),
+            new_token(Type::Ident, "ten"),
+            new_token(Type::Rparen, ")"),
+            new_token(Type::Semicolon, ";"),
+            new_token(Type::Bang, "!"),
+            new_token(Type::Minus, "-"),
+            new_token(Type::Slash, "/"),
+            new_token(Type::Asterisk, "*"),
+            new_token(Type::Int, "5"),
+            new_token(Type::Semicolon, ";"),
+            new_token(Type::Int, "5"),
+            new_token(Type::Lt, "<"),
+            new_token(Type::Int, "10"),
+            new_token(Type::Gt, ">"),
+            new_token(Type::Int, "5"),
+            new_token(Type::Semicolon, ";"),
+            new_token(Type::If, "if"),
+            new_token(Type::Lparen, "("),
+            new_token(Type::Int, "5"),
+            new_token(Type::Lt, "<"),
+            new_token(Type::Int, "10"),
+            new_token(Type::Rparen, ")"),
+            new_token(Type::Lbrace, "{"),
+            new_token(Type::Return, "return"),
+            new_token(Type::True, "true"),
+            new_token(Type::Semicolon, ";"),
+            new_token(Type::Rbrace, "}"),
+            new_token(Type::Else, "else"),
+            new_token(Type::Lbrace, "{"),
+            new_token(Type::Return, "return"),
+            new_token(Type::False, "false"),
+            new_token(Type::Semicolon, ";"),
+            new_token(Type::Rbrace, "}"),
+            new_token(Type::Int, "10"),
+            new_token(Type::Equ, "=="),
+            new_token(Type::Int, "10"),
+            new_token(Type::Semicolon, ";"),
+            new_token(Type::Int, "10"),
+            new_token(Type::Neq, "!="),
+            new_token(Type::Int, "9"),
+            new_token(Type::Semicolon, ";"),
+            new_token(Type::Eof, ""),
+        ];
+
+        let mut l = new(input);
+        for expect in expects.iter() {
+            let tok = l.next_token();
+            assert_eq!(tok.t, expect.t);
+            assert_eq!(tok.literal, expect.literal);
+        }
     }
 }

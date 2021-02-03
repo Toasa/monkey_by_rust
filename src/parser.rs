@@ -348,110 +348,72 @@ fn to_precedence(t: token::Type) -> Precedence {
     };
 }
 
-#[test]
-fn let_stmts() {
-    let input = "let x = 5;
-        let y = 10;
-        let foobar = 838383;";
+#[cfg(test)]
+mod test {
+    use super::*;
 
-    let mut l = lexer::new(input);
-    let mut p = new(&mut l);
-    let program = p.parse_program();
+    #[test]
+    fn let_stmts() {
+        let input = "let x = 5;
+            let y = 10;
+            let foobar = 838383;";
 
-    assert_eq!(p.errors.len(), 0);
-    assert_eq!(program.stmts.len(), 3);
+        let mut l = lexer::new(input);
+        let mut p = new(&mut l);
+        let program = p.parse_program();
 
-    let idents = [
-        "x", "y", "foobar"
-    ];
+        assert_eq!(p.errors.len(), 0);
+        assert_eq!(program.stmts.len(), 3);
 
-    let exprs = [ 5, 10, 838383 ];
+        let idents = [
+            "x", "y", "foobar"
+        ];
 
-    for (i, stmt) in program.stmts.iter().enumerate() {
-        match stmt {
-            Stmt::Let(ls) => {
-                assert_eq!(ls.token.literal, "let");
-                assert_eq!(ls.name.val, idents[i]);
-                assert_eq!(ls.name.token.literal, idents[i]);
-                test_int(&ls.val, exprs[i]);
-            },
-            _ => panic!("We parsed other than let statement."),
+        let exprs = [ 5, 10, 838383 ];
+
+        for (i, stmt) in program.stmts.iter().enumerate() {
+            match stmt {
+                Stmt::Let(ls) => {
+                    assert_eq!(ls.token.literal, "let");
+                    assert_eq!(ls.name.val, idents[i]);
+                    assert_eq!(ls.name.token.literal, idents[i]);
+                    test_int(&ls.val, exprs[i]);
+                },
+                _ => panic!("We parsed other than let statement."),
+            }
         }
     }
-}
 
-#[test]
-fn return_stmts() {
-    let input = "return 5;
-        return 10;
-        return 993322;";
+    #[test]
+    fn return_stmts() {
+        let input = "return 5;
+            return 10;
+            return 993322;";
 
-    let mut l = lexer::new(input);
-    let mut p = new(&mut l);
-    let program = p.parse_program();
+        let mut l = lexer::new(input);
+        let mut p = new(&mut l);
+        let program = p.parse_program();
 
-    assert_eq!(p.errors.len(), 0);
-    assert_eq!(program.stmts.len(), 3);
+        assert_eq!(p.errors.len(), 0);
+        assert_eq!(program.stmts.len(), 3);
 
-    let vals = [ 5, 10, 993322 ];
+        let vals = [ 5, 10, 993322 ];
 
-    for (i, stmt) in program.stmts.iter().enumerate() {
-        match stmt {
-            Stmt::Return(rs) => {
-                assert_eq!(rs.token.literal, "return");
-                test_int(&rs.val, vals[i]);
-            },
-            _ => panic!("We parsed other than return statement."),
+        for (i, stmt) in program.stmts.iter().enumerate() {
+            match stmt {
+                Stmt::Return(rs) => {
+                    assert_eq!(rs.token.literal, "return");
+                    test_int(&rs.val, vals[i]);
+                },
+                _ => panic!("We parsed other than return statement."),
+            }
         }
     }
-}
 
-#[test]
-fn ident_expr() {
-    let input = "foobar;";
+    #[test]
+    fn ident_expr() {
+        let input = "foobar;";
 
-    let mut l = lexer::new(input);
-    let mut p = new(&mut l);
-    let program = p.parse_program();
-
-    assert_eq!(p.errors.len(), 0);
-    assert_eq!(program.stmts.len(), 1);
-
-    let stmt = &program.stmts[0];
-    let es = match stmt {
-        Stmt::ExprStmt(es) => es,
-        _ => panic!("We parsed other than expression statement."),
-    };
-
-    test_ident(&es.expr, "foobar");
-}
-
-#[test]
-fn int_expr() {
-    let input = "5;";
-
-    let mut l = lexer::new(input);
-    let mut p = new(&mut l);
-    let program = p.parse_program();
-
-    assert_eq!(p.errors.len(), 0);
-    assert_eq!(program.stmts.len(), 1);
-
-    let stmt = &program.stmts[0];
-    let es = match stmt {
-        Stmt::ExprStmt(es) => es,
-        _ => panic!("We parsed other than expression statement."),
-    };
-
-    test_int(&es.expr, 5);
-}
-
-#[test]
-fn boolean_expr() {
-    let inputs = vec![ "true;", "false;"];
-    let expects = vec![ true, false ];
-
-    for (i, input) in inputs.iter().enumerate() {
         let mut l = lexer::new(input);
         let mut p = new(&mut l);
         let program = p.parse_program();
@@ -465,23 +427,13 @@ fn boolean_expr() {
             _ => panic!("We parsed other than expression statement."),
         };
 
-        match &es.expr {
-            Expr::Boolean(b) => assert_eq!(b.val, expects[i]),
-            _ => panic!("We parsed other than boolean expression."),
-        }
+        test_ident(&es.expr, "foobar");
     }
-}
 
-#[test]
-fn if_expr() {
-    let inputs= vec![
-        "if (x < y) { x };",
-        "if (x < y) { x } else { y };"
-    ];
+    #[test]
+    fn int_expr() {
+        let input = "5;";
 
-    let has_alt = vec![ false, true ];
-
-    for (i, input) in inputs.iter().enumerate() {
         let mut l = lexer::new(input);
         let mut p = new(&mut l);
         let program = p.parse_program();
@@ -495,228 +447,281 @@ fn if_expr() {
             _ => panic!("We parsed other than expression statement."),
         };
 
-        let ifstmt = match &es.expr {
-            Expr::If(i) => i,
+        test_int(&es.expr, 5);
+    }
+
+    #[test]
+    fn boolean_expr() {
+        let inputs = vec![ "true;", "false;"];
+        let expects = vec![ true, false ];
+
+        for (i, input) in inputs.iter().enumerate() {
+            let mut l = lexer::new(input);
+            let mut p = new(&mut l);
+            let program = p.parse_program();
+
+            assert_eq!(p.errors.len(), 0);
+            assert_eq!(program.stmts.len(), 1);
+
+            let stmt = &program.stmts[0];
+            let es = match stmt {
+                Stmt::ExprStmt(es) => es,
+                _ => panic!("We parsed other than expression statement."),
+            };
+
+            match &es.expr {
+                Expr::Boolean(b) => assert_eq!(b.val, expects[i]),
+                _ => panic!("We parsed other than boolean expression."),
+            }
+        }
+    }
+
+    #[test]
+    fn if_expr() {
+        let inputs= vec![
+            "if (x < y) { x };",
+            "if (x < y) { x } else { y };"
+        ];
+
+        let has_alt = vec![ false, true ];
+
+        for (i, input) in inputs.iter().enumerate() {
+            let mut l = lexer::new(input);
+            let mut p = new(&mut l);
+            let program = p.parse_program();
+
+            assert_eq!(p.errors.len(), 0);
+            assert_eq!(program.stmts.len(), 1);
+
+            let stmt = &program.stmts[0];
+            let es = match stmt {
+                Stmt::ExprStmt(es) => es,
+                _ => panic!("We parsed other than expression statement."),
+            };
+
+            let ifstmt = match &es.expr {
+                Expr::If(i) => i,
+                _ => panic!("We parsed other than integer."),
+            };
+
+            if has_alt[i] {
+                assert!(ifstmt.alt.is_some());
+            } else {
+                assert!(ifstmt.alt.is_none());
+            }
+        }
+    }
+
+    #[test]
+    fn fn_expr() {
+        let input = "fn(x, y) { x + y; }";
+
+        let mut l = lexer::new(input);
+        let mut p = new(&mut l);
+        let program = p.parse_program();
+
+        assert_eq!(p.errors.len(), 0);
+        assert_eq!(program.stmts.len(), 1);
+
+        let stmt = &program.stmts[0];
+        let es = match stmt {
+            Stmt::ExprStmt(es) => es,
+            _ => panic!("We parsed other than expression statement."),
+        };
+
+        let f = match &es.expr {
+            Expr::Func(f) => f,
+            _ => panic!("We parsed other than function expression."),
+        };
+
+        assert_eq!(f.params[0].val, "x");
+        assert_eq!(f.params[1].val, "y");
+    }
+
+    #[test]
+    fn call_expr() {
+        let input = "add(1, 2 * 3, 4 + 5);";
+
+        let mut l = lexer::new(input);
+        let mut p = new(&mut l);
+        let program = p.parse_program();
+
+        assert_eq!(p.errors.len(), 0);
+        assert_eq!(program.stmts.len(), 1);
+
+        let stmt = &program.stmts[0];
+        let es = match stmt {
+            Stmt::ExprStmt(es) => es,
+            _ => panic!("We parsed other than expression statement."),
+        };
+
+        let c = match &es.expr {
+            Expr::Call(c) => c,
+            _ => panic!("We parsed other than function call."),
+        };
+
+        test_ident(&*(c.func), "add");
+        test_int(&c.args[0], 1);
+    }
+
+    #[test]
+    fn prefix_exprs() {
+        let inputs = vec![ "!5;", "-15;" ];
+        let expect_prefixes = vec![ "!", "-" ];
+        let expect_ints = vec![ 5, 15 ];
+
+        for (i, input) in inputs.iter().enumerate() {
+            let mut l = lexer::new(input);
+            let mut p = new(&mut l);
+            let program = p.parse_program();
+
+            assert_eq!(p.errors.len(), 0);
+            assert_eq!(program.stmts.len(), 1);
+
+            let stmt = &program.stmts[0];
+            let es = match stmt {
+                Stmt::ExprStmt(es) => es,
+                _ => panic!("We parsed other than expression statement."),
+            };
+
+            let pre = match &es.expr {
+                Expr::Prefix(pre) => pre,
+                _ => panic!("We parsed other than prefix expression."),
+            };
+
+            assert_eq!(pre.op, expect_prefixes[i]);
+            test_int(&*pre.rhs, expect_ints[i]);
+        }
+    }
+
+    #[test]
+    fn infix_exprs() {
+        struct Test<'a> {
+            input: &'a str,
+            lhs: isize,
+            op: &'a str,
+            rhs: isize,
+        }
+
+        let tests: Vec<Test> = vec![
+            Test { input: "5+5;", lhs: 5, op: "+", rhs: 5 },
+            Test { input: "5-5;", lhs: 5, op: "-", rhs: 5 },
+            Test { input: "5*5;", lhs: 5, op: "*", rhs: 5 },
+            Test { input: "5/5;", lhs: 5, op: "/", rhs: 5 },
+            Test { input: "5>5;", lhs: 5, op: ">", rhs: 5 },
+            Test { input: "5<5;", lhs: 5, op: "<", rhs: 5 },
+            Test { input: "5==5;", lhs: 5, op: "==", rhs: 5 },
+            Test { input: "5!=5;", lhs: 5, op: "!=", rhs: 5 },
+        ];
+
+        for test in tests.iter() {
+            let mut l = lexer::new(&test.input);
+            let mut p = new(&mut l);
+            let program = p.parse_program();
+
+            assert_eq!(p.errors.len(), 0);
+            assert_eq!(program.stmts.len(), 1);
+
+            let stmt = &program.stmts[0];
+            let es = match stmt {
+                Stmt::ExprStmt(es) => es,
+                _ => panic!("We parsed other than expression statement."),
+            };
+
+            let i = match &es.expr {
+                Expr::Infix(i) => i,
+                _ => panic!("We parsed other than infix expression."),
+            };
+
+            test_int(&*(i.lhs), test.lhs);
+            test_int(&*(i.rhs), test.rhs);
+            assert_eq!(i.op, test.op);
+        }
+    }
+
+    #[test]
+    fn operator_precedence() {
+        struct Test<'a> {
+            input: &'a str,
+            expected: &'a str,
+        }
+
+        let tests: Vec<Test> = vec![
+            Test {
+                input: "true",
+                expected: "true"
+            },
+            Test {
+                input: "false",
+                expected: "false"
+            },
+            Test {
+                input: "3 > 5 == false",
+                expected: "((3 > 5) == false)"
+            },
+            Test {
+                input: "3 < 5 == true",
+                expected: "((3 < 5) == true)"
+            },
+            Test {
+                input: "1 + (2 + 3) + 4",
+                expected: "((1 + (2 + 3)) + 4)"
+            },
+            Test {
+                input: "(2 + 5) * 4",
+                expected: "((2 + 5) * 4)"
+            },
+            Test {
+                input: "2 / (5 + 4)",
+                expected: "(2 / (5 + 4))"
+            },
+            Test {
+                input: "-(5 + 4)",
+                expected: "(-(5 + 4))"
+            },
+            Test {
+                input: "!(true + true)",
+                expected: "(!(true + true))"
+            },
+            Test {
+                input: "a + add(b * c) + d",
+                expected: "((a + add((b * c))) + d)"
+            },
+            Test {
+                input: "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+                expected: "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))"
+            },
+            Test {
+                input: "add(a + b + c * d / f + g)",
+                expected: "add((((a + b) + ((c * d) / f)) + g))"
+            },
+        ];
+
+        for test in tests.iter() {
+            let mut l = lexer::new(&test.input);
+            let mut p = new(&mut l);
+            let program = p.parse_program();
+
+            assert_eq!(p.errors.len(), 0);
+            assert_eq!(program.stmts.len(), 1);
+
+            let stmt = &program.stmts[0];
+            let stmt_str = format!("{}", stmt);
+            assert_eq!(stmt_str, test.expected);
+        }
+    }
+
+    fn test_int(n: &Expr, expected: isize) {
+        match n {
+            Expr::Int(int) => assert_eq!(int.val, expected),
             _ => panic!("We parsed other than integer."),
         };
-
-        if has_alt[i] {
-            assert!(ifstmt.alt.is_some());
-        } else {
-            assert!(ifstmt.alt.is_none());
-        }
     }
-}
 
-#[test]
-fn fn_expr() {
-    let input = "fn(x, y) { x + y; }";
-
-    let mut l = lexer::new(input);
-    let mut p = new(&mut l);
-    let program = p.parse_program();
-
-    assert_eq!(p.errors.len(), 0);
-    assert_eq!(program.stmts.len(), 1);
-
-    let stmt = &program.stmts[0];
-    let es = match stmt {
-        Stmt::ExprStmt(es) => es,
-        _ => panic!("We parsed other than expression statement."),
-    };
-
-    let f = match &es.expr {
-        Expr::Func(f) => f,
-        _ => panic!("We parsed other than function expression."),
-    };
-
-    assert_eq!(f.params[0].val, "x");
-    assert_eq!(f.params[1].val, "y");
-}
-
-#[test]
-fn call_expr() {
-    let input = "add(1, 2 * 3, 4 + 5);";
-
-    let mut l = lexer::new(input);
-    let mut p = new(&mut l);
-    let program = p.parse_program();
-
-    assert_eq!(p.errors.len(), 0);
-    assert_eq!(program.stmts.len(), 1);
-
-    let stmt = &program.stmts[0];
-    let es = match stmt {
-        Stmt::ExprStmt(es) => es,
-        _ => panic!("We parsed other than expression statement."),
-    };
-
-    let c = match &es.expr {
-        Expr::Call(c) => c,
-        _ => panic!("We parsed other than function call."),
-    };
-
-    test_ident(&*(c.func), "add");
-    test_int(&c.args[0], 1);
-}
-
-#[test]
-fn prefix_exprs() {
-    let inputs = vec![ "!5;", "-15;" ];
-    let expect_prefixes = vec![ "!", "-" ];
-    let expect_ints = vec![ 5, 15 ];
-
-    for (i, input) in inputs.iter().enumerate() {
-        let mut l = lexer::new(input);
-        let mut p = new(&mut l);
-        let program = p.parse_program();
-
-        assert_eq!(p.errors.len(), 0);
-        assert_eq!(program.stmts.len(), 1);
-
-        let stmt = &program.stmts[0];
-        let es = match stmt {
-            Stmt::ExprStmt(es) => es,
-            _ => panic!("We parsed other than expression statement."),
+    fn test_ident(ident: &Expr, expected: &str) {
+        match ident {
+            Expr::Ident(id) => assert_eq!(id.val, expected),
+            _ => panic!("We parsed other than identifer."),
         };
-
-        let pre = match &es.expr {
-            Expr::Prefix(pre) => pre,
-            _ => panic!("We parsed other than prefix expression."),
-        };
-
-        assert_eq!(pre.op, expect_prefixes[i]);
-        test_int(&*pre.rhs, expect_ints[i]);
     }
-}
-
-#[test]
-fn infix_exprs() {
-    struct Test<'a> {
-        input: &'a str,
-        lhs: isize,
-        op: &'a str,
-        rhs: isize,
-    }
-
-    let tests: Vec<Test> = vec![
-        Test { input: "5+5;", lhs: 5, op: "+", rhs: 5 },
-        Test { input: "5-5;", lhs: 5, op: "-", rhs: 5 },
-        Test { input: "5*5;", lhs: 5, op: "*", rhs: 5 },
-        Test { input: "5/5;", lhs: 5, op: "/", rhs: 5 },
-        Test { input: "5>5;", lhs: 5, op: ">", rhs: 5 },
-        Test { input: "5<5;", lhs: 5, op: "<", rhs: 5 },
-        Test { input: "5==5;", lhs: 5, op: "==", rhs: 5 },
-        Test { input: "5!=5;", lhs: 5, op: "!=", rhs: 5 },
-    ];
-
-    for test in tests.iter() {
-        let mut l = lexer::new(&test.input);
-        let mut p = new(&mut l);
-        let program = p.parse_program();
-
-        assert_eq!(p.errors.len(), 0);
-        assert_eq!(program.stmts.len(), 1);
-
-        let stmt = &program.stmts[0];
-        let es = match stmt {
-            Stmt::ExprStmt(es) => es,
-            _ => panic!("We parsed other than expression statement."),
-        };
-
-        let i = match &es.expr {
-            Expr::Infix(i) => i,
-            _ => panic!("We parsed other than infix expression."),
-        };
-
-        test_int(&*(i.lhs), test.lhs);
-        test_int(&*(i.rhs), test.rhs);
-        assert_eq!(i.op, test.op);
-    }
-}
-
-#[test]
-fn operator_precedence() {
-    struct Test<'a> {
-        input: &'a str,
-        expected: &'a str,
-    }
-
-    let tests: Vec<Test> = vec![
-        Test {
-            input: "true",
-            expected: "true"
-        },
-        Test {
-            input: "false",
-            expected: "false"
-        },
-        Test {
-            input: "3 > 5 == false",
-            expected: "((3 > 5) == false)"
-        },
-        Test {
-            input: "3 < 5 == true",
-            expected: "((3 < 5) == true)"
-        },
-        Test {
-            input: "1 + (2 + 3) + 4",
-            expected: "((1 + (2 + 3)) + 4)"
-        },
-        Test {
-            input: "(2 + 5) * 4",
-            expected: "((2 + 5) * 4)"
-        },
-        Test {
-            input: "2 / (5 + 4)",
-            expected: "(2 / (5 + 4))"
-        },
-        Test {
-            input: "-(5 + 4)",
-            expected: "(-(5 + 4))"
-        },
-        Test {
-            input: "!(true + true)",
-            expected: "(!(true + true))"
-        },
-        Test {
-            input: "a + add(b * c) + d",
-            expected: "((a + add((b * c))) + d)"
-        },
-        Test {
-            input: "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
-            expected: "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))"
-        },
-        Test {
-            input: "add(a + b + c * d / f + g)",
-            expected: "add((((a + b) + ((c * d) / f)) + g))"
-        },
-    ];
-
-    for test in tests.iter() {
-        let mut l = lexer::new(&test.input);
-        let mut p = new(&mut l);
-        let program = p.parse_program();
-
-        assert_eq!(p.errors.len(), 0);
-        assert_eq!(program.stmts.len(), 1);
-
-        let stmt = &program.stmts[0];
-        let stmt_str = format!("{}", stmt);
-        assert_eq!(stmt_str, test.expected);
-    }
-}
-
-fn test_int(n: &Expr, expected: isize) {
-    match n {
-        Expr::Int(int) => assert_eq!(int.val, expected),
-        _ => panic!("We parsed other than integer."),
-    };
-}
-
-fn test_ident(ident: &Expr, expected: &str) {
-    match ident {
-        Expr::Ident(id) => assert_eq!(id.val, expected),
-        _ => panic!("We parsed other than identifer."),
-    };
 }

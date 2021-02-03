@@ -1,12 +1,14 @@
 use crate::token;
 use std::fmt;
 
+#[allow(dead_code)]
 enum Node {
     Program(Program),
     Stmt(Stmt),
     Expr(Expr),
 }
 
+#[allow(dead_code)]
 pub enum Stmt {
     Let(Let),
     Return(Return),
@@ -60,7 +62,7 @@ pub struct Program {
 impl fmt::Display for Program {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for stmt in &self.stmts {
-            write!(f, "{}", stmt);
+            write!(f, "{}", stmt)?;
         }
         Ok(())
     }
@@ -181,9 +183,9 @@ pub struct If {
 
 impl fmt::Display for If {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "if {} {}", self.cond, self.cons);
+        write!(f, "if {} {}", self.cond, self.cons)?;
         if let Some(alt) = &self.alt {
-            write!(f, "{}", alt);
+            write!(f, "{}", alt)?;
         }
         Ok(())
     }
@@ -197,12 +199,12 @@ pub struct Func {
 
 impl fmt::Display for Func {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "fn");
-        write!(f, "(");
+        write!(f, "fn")?;
+        write!(f, "(")?;
         for param in &self.params {
-            write!(f, "{}", param);
+            write!(f, "{}", param)?;
         }
-        write!(f, ")");
+        write!(f, ")")?;
         write!(f, "{}", self.body)
     }
 }
@@ -215,14 +217,14 @@ pub struct Call {
 
 impl fmt::Display for Call {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.func);
-        write!(f, "(");
+        write!(f, "{}", self.func)?;
+        write!(f, "(")?;
 
         let len = self.args.len();
         for (i, arg) in self.args.iter().enumerate() {
-            write!(f, "{}", arg);
+            write!(f, "{}", arg)?;
             if i != len - 1 {
-                write!(f, ", ");
+                write!(f, ", ")?;
             }
         }
         write!(f, ")")
