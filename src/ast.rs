@@ -34,6 +34,7 @@ pub enum Expr {
     Boolean(Boolean),
     If(If),
     Func(Func),
+    Call(Call),
 }
 
 impl fmt::Display for Expr {
@@ -46,6 +47,7 @@ impl fmt::Display for Expr {
             Expr::Boolean(b) => format!("{}", b),
             Expr::If(i) => format!("{}", i),
             Expr::Func(f) => format!("{}", f),
+            Expr::Call(c) => format!("{}", c),
         };
         write!(f, "{}", s)
     }
@@ -195,5 +197,27 @@ impl fmt::Display for Func {
         }
         write!(f, ")");
         write!(f, "{}", self.body)
+    }
+}
+
+pub struct Call {
+    pub token: token::Token,
+    pub func: Box<Expr>,
+    pub args: Vec<Expr>,
+}
+
+impl fmt::Display for Call {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.func);
+        write!(f, "(");
+
+        let len = self.args.len();
+        for (i, arg) in self.args.iter().enumerate() {
+            write!(f, "{}", arg);
+            if i != len - 1 {
+                write!(f, ", ");
+            }
+        }
+        write!(f, ")")
     }
 }

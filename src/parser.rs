@@ -13,6 +13,7 @@ use crate::ast::{
     Boolean,
     If,
     Func,
+    Call,
 };
 use crate::lexer;
 use crate::token;
@@ -143,6 +144,10 @@ impl Parser<'_> {
                     self.next_token();
                     lhs = Expr::Infix(self.parse_infix(lhs));
                 },
+                token::Type::Lparen => {
+                    self.next_token();
+                    lhs = Expr::Call(self.parse_call(lhs));
+                },
                 _ => return lhs,
             }
         }
@@ -218,6 +223,29 @@ impl Parser<'_> {
         let e = self.parse_expr(Precedence::Lowest);
         let _ = self.expect_peek(token::Type::Rparen);
         e
+    }
+
+    fn parse_call(&mut self, func: Expr) -> Call {
+        let t = self.cur_token.clone();
+        let args = self.parse_call_args();
+        Call { token: t, func: Box::new(func), args: args }
+    }
+
+    fn parse_call_args(&mut self) -> Vec<Expr> {
+        let mut args: Vec<Expr> = vec![];
+        self.next_token();
+        while !self.cur_token_is(token::Type::Rparen) {
+            let arg = self.parse_expr(Precedence::Lowest);
+            args.push(arg);
+
+            // skip argument
+            self.next_token();
+
+            if self.cur_token_is(token::Type::Comma) {
+                self.next_token();
+            }
+        }
+        args
     }
 
     fn parse_prefix(&mut self) -> Prefix {
@@ -314,6 +342,8 @@ fn to_precedence(t: token::Type) -> Precedence {
             => Precedence::Add,
         token::Type::Slash | token::Type::Asterisk
             => Precedence::Mul,
+        token::Type::Lparen 
+            => Precedence::Call,
         _ => Precedence::Lowest,
     };
 }
@@ -500,6 +530,32 @@ fn fn_expr() {
 
     assert_eq!(f.params[0].val, "x");
     assert_eq!(f.params[1].val, "y");
+}
+
+#[test]
+fn call_expr() {
+    let input = "add(1, 2 * 3, 4 + 5);";
+
+    let mut l = lexer::new(input);
+    let mut p = new(&mut l);
+    let program = p.parse_program();
+
+    assert_eq!(p.errors.len(), 0);
+    assert_eq!(program.stmts.len(), 1);
+
+    let stmt = &program.stmts[0];
+    let es = match stmt {
+        Stmt::ExprStmt(es) => es,
+        _ => panic!("We parsed other than expression statement."),
+    };
+
+    let c = match &es.expr {
+        Expr::Call(c) => c,
+        _ => panic!("We parsed other than function call."),
+    };
+
+    test_ident(&*(c.func), "add");
+    test_int(&c.args[0], 1);
 }
 
 #[test]
