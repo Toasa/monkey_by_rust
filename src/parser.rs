@@ -95,10 +95,12 @@ impl Parser<'_> {
         let t = self.cur_token.clone();
         self.next_token();
 
-        while !self.cur_token_is(token::Type::Semicolon) {
+        let val = self.parse_expr(Precedence::Lowest);
+
+        if self.peek_token_is(token::Type::Semicolon) {
             self.next_token();
         }
-        Return { token: t }
+        Return { token: t, val: val }
     }
 
     fn parse_expr_stmt(&mut self) -> ExprStmt {
@@ -391,14 +393,13 @@ fn return_stmts() {
     assert_eq!(p.errors.len(), 0);
     assert_eq!(program.stmts.len(), 3);
 
-    let vals = [
-        "5", "10", "993322"
-    ];
+    let vals = [ 5, 10, 993322 ];
 
     for (i, stmt) in program.stmts.iter().enumerate() {
         match stmt {
             Stmt::Return(rs) => {
                 assert_eq!(rs.token.literal, "return");
+                test_int(&rs.val, vals[i]);
             },
             _ => panic!("We parsed other than return statement."),
         }

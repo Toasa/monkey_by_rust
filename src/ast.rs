@@ -71,13 +71,12 @@ impl fmt::Display for Let {
 
 pub struct Return {
     pub token: token::Token,
-    // pub val: Expr,
+    pub val: Expr,
 }
 
 impl fmt::Display for Return {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // write!(f, "return {};", self.val)
-        write!(f, "return ;")
+        write!(f, "return {};", self.val)
     }
 }
 
