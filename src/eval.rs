@@ -57,10 +57,12 @@ pub fn eval_prefix_expr(op: &str, rhs: &Object) -> Object {
 pub fn eval_infix_expr(op: &str, lhs: &Object, rhs: &Object) -> Object {
     let lval = match lhs {
         Object::Int(n) => n.val,
+        Object::Bool(b) => b.val as isize,
         _ => return Object::Null(Null {}),
     };
     let rval = match rhs {
         Object::Int(n) => n.val,
+        Object::Bool(b) => b.val as isize,
         _ => return Object::Null(Null {}),
     };
 
@@ -146,6 +148,15 @@ mod test {
             Test { input: "1 != 1", expected: false },
             Test { input: "1 == 2", expected: false },
             Test { input: "1 != 2", expected: true },
+            Test { input: "true == true", expected: true },
+            Test { input: "false == false", expected: true },
+            Test { input: "true == false", expected: false },
+            Test { input: "true != false", expected: true },
+            Test { input: "false != true", expected: true },
+            Test { input: "(1 < 2) == true", expected: true },
+            Test { input: "(1 < 2) == false", expected: false },
+            Test { input: "(1 > 2) == true", expected: false },
+            Test { input: "(1 > 2) == false", expected: true },
         ];
 
         for test in tests.iter() {
