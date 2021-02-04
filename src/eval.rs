@@ -43,13 +43,13 @@ pub fn eval_expr(expr: &ast::Expr) -> Object {
 
 pub fn eval_prefix_expr(op: &str, rhs: &Object) -> Object {
     return match op {
-        "!" => eval_bang(rhs),
+        "!" => eval_prefix_bang(rhs),
         "-" => eval_prefix_minus(rhs),
         _ => Object::Null(Null {}),
     };
 }
 
-pub fn eval_bang(rhs: &Object) -> Object {
+pub fn eval_prefix_bang(rhs: &Object) -> Object {
     return match rhs {
         Object::Bool(b) => Object::Bool(Bool { val: !b.val }),
         Object::Null(_) => Object::Bool(Bool { val: true }),
