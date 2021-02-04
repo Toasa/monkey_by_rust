@@ -37,6 +37,11 @@ pub fn eval_expr(expr: &ast::Expr) -> Object {
             let rhs = eval_expr(&*p.rhs);
             eval_prefix_expr(&p.op, &rhs)
         },
+        ast::Expr::Infix(i) => {
+            let lhs = eval_expr(&*i.lhs);
+            let rhs = eval_expr(&*i.rhs);
+            eval_infix_expr(&i.op, &lhs, &rhs)
+        },
         _ => panic!("Unsupported expression"),
     }
 }
@@ -47,6 +52,25 @@ pub fn eval_prefix_expr(op: &str, rhs: &Object) -> Object {
         "-" => eval_prefix_minus(rhs),
         _ => Object::Null(Null {}),
     };
+}
+
+pub fn eval_infix_expr(op: &str, lhs: &Object, rhs: &Object) -> Object {
+    let lval = match lhs {
+        Object::Int(n) => n.val,
+        _ => return Object::Null(Null {}),
+    };
+    let rval = match rhs {
+        Object::Int(n) => n.val,
+        _ => return Object::Null(Null {}),
+    };
+
+    return match op {
+        "+" => Object::Int(Int { val: lval + rval }),
+        "-" => Object::Int(Int { val: lval - rval }),
+        "*" => Object::Int(Int { val: lval * rval }),
+        "/" => Object::Int(Int { val: lval / rval }),
+        _ => Object::Null(Null {}),
+    }
 }
 
 pub fn eval_prefix_bang(rhs: &Object) -> Object {
@@ -82,6 +106,16 @@ mod test {
             Test { input: "10", expected: 10 },
             Test { input: "-5", expected: -5 },
             Test { input: "10", expected: 10 },
+            Test { input: "5 + 5 + 5 - 5", expected: 10 },
+            Test { input: "2 * 2 * 2 * 2", expected: 16 },
+            Test { input: "2 + 3 * 4", expected: 14 },
+            Test { input: "2 * 3 + 4", expected: 10 },
+            Test { input: "-10 + 100 + -10", expected: 80 },
+            Test { input: "50 / 2 * 2 + 10", expected: 60 },
+            Test { input: "2 * (5 + 10)", expected: 30 },
+            Test { input: "3 * 3 * 3 + 10", expected: 37 },
+            Test { input: "3 * (3 * 3) + 10", expected: 37 },
+            Test { input: "(5 + 10 * 2 + 15 / 3) * 2 + -10", expected: 50 },
         ];
 
         for test in tests.iter() {
