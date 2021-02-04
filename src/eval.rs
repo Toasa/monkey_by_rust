@@ -31,7 +31,7 @@ pub fn eval_stmt(stmt: &ast::Stmt) -> Object {
 pub fn eval_expr(expr: &ast::Expr) -> Object {
     return match expr {
         ast::Expr::Int(n) => Object::Int(Int { val: n.val }),
-        ast::Expr::Boolean(b) => Object::Bool(Bool { val: b.val }),
+        ast::Expr::Bool(b) => Object::Bool(Bool { val: b.val }),
         _ => panic!("Unsupported expression"),
     }
 }

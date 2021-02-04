@@ -33,7 +33,7 @@ pub enum Expr {
     Int(Int),
     Prefix(Prefix),
     Infix(Infix),
-    Boolean(Boolean),
+    Bool(Bool),
     If(If),
     Func(Func),
     Call(Call),
@@ -46,7 +46,7 @@ impl fmt::Display for Expr {
             Expr::Int(n) => format!("{}", n),
             Expr::Prefix(p) => format!("{}", p),
             Expr::Infix(i) => format!("{}", i),
-            Expr::Boolean(b) => format!("{}", b),
+            Expr::Bool(b) => format!("{}", b),
             Expr::If(i) => format!("{}", i),
             Expr::Func(f) => format!("{}", f),
             Expr::Call(c) => format!("{}", c),
@@ -163,12 +163,12 @@ impl fmt::Display for Infix {
     }
 }
 
-pub struct Boolean {
+pub struct Bool {
     pub token: token::Token,
     pub val: bool,
 }
 
-impl fmt::Display for Boolean {
+impl fmt::Display for Bool {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.val)
     }

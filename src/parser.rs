@@ -10,7 +10,7 @@ use crate::ast::{
     Int,
     Prefix,
     Infix,
-    Boolean,
+    Bool,
     If,
     Func,
     Call,
@@ -211,11 +211,11 @@ impl Parser<'_> {
         params
     }
 
-    fn parse_boolean(&mut self) -> Boolean {
+    fn parse_boolean(&mut self) -> Bool {
         let t = self.cur_token.clone();
         let b: bool = if self.cur_token.clone().literal == "true"
             { true } else { false };
-        Boolean { token:t , val: b}
+        Bool { token:t , val: b}
     }
 
     fn parse_grouped_expr(&mut self) -> Expr {
@@ -325,7 +325,7 @@ impl Parser<'_> {
                 Expr::Prefix(self.parse_prefix())
             },
             token::Type::True | token::Type::False => {
-                Expr::Boolean(self.parse_boolean())
+                Expr::Bool(self.parse_boolean())
             },
             _ => Expr::Int(self.parse_int()),
         };
@@ -444,7 +444,7 @@ mod test {
             let es = test_expr_stmt(stmt);
 
             match &es.expr {
-                Expr::Boolean(b) => assert_eq!(b.val, expects[i]),
+                Expr::Bool(b) => assert_eq!(b.val, expects[i]),
                 _ => panic!("We parsed other than boolean expression."),
             }
         }
