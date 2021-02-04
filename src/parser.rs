@@ -362,7 +362,6 @@ mod test {
         let mut p = new(&mut l);
         let program = p.parse_program();
 
-        assert_eq!(p.errors.len(), 0);
         assert_eq!(program.stmts.len(), 3);
 
         let idents = [
@@ -389,21 +388,16 @@ mod test {
         let input = "return 5;
             return 10;
             return 993322;";
+        let expects = [ 5, 10, 993322 ];
+        let program = test_parse_program(input);
 
-        let mut l = lexer::new(input);
-        let mut p = new(&mut l);
-        let program = p.parse_program();
-
-        assert_eq!(p.errors.len(), 0);
         assert_eq!(program.stmts.len(), 3);
-
-        let vals = [ 5, 10, 993322 ];
 
         for (i, stmt) in program.stmts.iter().enumerate() {
             match stmt {
                 Stmt::Return(rs) => {
                     assert_eq!(rs.token.literal, "return");
-                    test_int(&rs.val, vals[i]);
+                    test_int(&rs.val, expects[i]);
                 },
                 _ => panic!("We parsed other than return statement."),
             }
@@ -413,19 +407,12 @@ mod test {
     #[test]
     fn ident_expr() {
         let input = "foobar;";
+        let program = test_parse_program(input);
 
-        let mut l = lexer::new(input);
-        let mut p = new(&mut l);
-        let program = p.parse_program();
-
-        assert_eq!(p.errors.len(), 0);
         assert_eq!(program.stmts.len(), 1);
 
         let stmt = &program.stmts[0];
-        let es = match stmt {
-            Stmt::ExprStmt(es) => es,
-            _ => panic!("We parsed other than expression statement."),
-        };
+        let es = test_expr_stmt(stmt);
 
         test_ident(&es.expr, "foobar");
     }
@@ -433,19 +420,12 @@ mod test {
     #[test]
     fn int_expr() {
         let input = "5;";
+        let program = test_parse_program(input);
 
-        let mut l = lexer::new(input);
-        let mut p = new(&mut l);
-        let program = p.parse_program();
-
-        assert_eq!(p.errors.len(), 0);
         assert_eq!(program.stmts.len(), 1);
 
         let stmt = &program.stmts[0];
-        let es = match stmt {
-            Stmt::ExprStmt(es) => es,
-            _ => panic!("We parsed other than expression statement."),
-        };
+        let es = test_expr_stmt(stmt);
 
         test_int(&es.expr, 5);
     }
@@ -456,18 +436,12 @@ mod test {
         let expects = vec![ true, false ];
 
         for (i, input) in inputs.iter().enumerate() {
-            let mut l = lexer::new(input);
-            let mut p = new(&mut l);
-            let program = p.parse_program();
+            let program = test_parse_program(input);
 
-            assert_eq!(p.errors.len(), 0);
             assert_eq!(program.stmts.len(), 1);
 
             let stmt = &program.stmts[0];
-            let es = match stmt {
-                Stmt::ExprStmt(es) => es,
-                _ => panic!("We parsed other than expression statement."),
-            };
+            let es = test_expr_stmt(stmt);
 
             match &es.expr {
                 Expr::Boolean(b) => assert_eq!(b.val, expects[i]),
@@ -486,18 +460,12 @@ mod test {
         let has_alt = vec![ false, true ];
 
         for (i, input) in inputs.iter().enumerate() {
-            let mut l = lexer::new(input);
-            let mut p = new(&mut l);
-            let program = p.parse_program();
+            let program = test_parse_program(input);
 
-            assert_eq!(p.errors.len(), 0);
             assert_eq!(program.stmts.len(), 1);
 
             let stmt = &program.stmts[0];
-            let es = match stmt {
-                Stmt::ExprStmt(es) => es,
-                _ => panic!("We parsed other than expression statement."),
-            };
+            let es = test_expr_stmt(stmt);
 
             let ifstmt = match &es.expr {
                 Expr::If(i) => i,
@@ -515,19 +483,12 @@ mod test {
     #[test]
     fn fn_expr() {
         let input = "fn(x, y) { x + y; }";
+        let program = test_parse_program(input);
 
-        let mut l = lexer::new(input);
-        let mut p = new(&mut l);
-        let program = p.parse_program();
-
-        assert_eq!(p.errors.len(), 0);
         assert_eq!(program.stmts.len(), 1);
 
         let stmt = &program.stmts[0];
-        let es = match stmt {
-            Stmt::ExprStmt(es) => es,
-            _ => panic!("We parsed other than expression statement."),
-        };
+        let es = test_expr_stmt(stmt);
 
         let f = match &es.expr {
             Expr::Func(f) => f,
@@ -541,19 +502,12 @@ mod test {
     #[test]
     fn call_expr() {
         let input = "add(1, 2 * 3, 4 + 5);";
+        let program = test_parse_program(input);
 
-        let mut l = lexer::new(input);
-        let mut p = new(&mut l);
-        let program = p.parse_program();
-
-        assert_eq!(p.errors.len(), 0);
         assert_eq!(program.stmts.len(), 1);
 
         let stmt = &program.stmts[0];
-        let es = match stmt {
-            Stmt::ExprStmt(es) => es,
-            _ => panic!("We parsed other than expression statement."),
-        };
+        let es = test_expr_stmt(stmt);
 
         let c = match &es.expr {
             Expr::Call(c) => c,
@@ -571,18 +525,12 @@ mod test {
         let expect_ints = vec![ 5, 15 ];
 
         for (i, input) in inputs.iter().enumerate() {
-            let mut l = lexer::new(input);
-            let mut p = new(&mut l);
-            let program = p.parse_program();
+            let program = test_parse_program(input);
 
-            assert_eq!(p.errors.len(), 0);
             assert_eq!(program.stmts.len(), 1);
 
             let stmt = &program.stmts[0];
-            let es = match stmt {
-                Stmt::ExprStmt(es) => es,
-                _ => panic!("We parsed other than expression statement."),
-            };
+            let es = test_expr_stmt(stmt);
 
             let pre = match &es.expr {
                 Expr::Prefix(pre) => pre,
@@ -615,18 +563,11 @@ mod test {
         ];
 
         for test in tests.iter() {
-            let mut l = lexer::new(&test.input);
-            let mut p = new(&mut l);
-            let program = p.parse_program();
-
-            assert_eq!(p.errors.len(), 0);
+            let program = test_parse_program(&test.input);
             assert_eq!(program.stmts.len(), 1);
 
             let stmt = &program.stmts[0];
-            let es = match stmt {
-                Stmt::ExprStmt(es) => es,
-                _ => panic!("We parsed other than expression statement."),
-            };
+            let es = test_expr_stmt(stmt);
 
             let i = match &es.expr {
                 Expr::Infix(i) => i,
@@ -698,17 +639,26 @@ mod test {
         ];
 
         for test in tests.iter() {
-            let mut l = lexer::new(&test.input);
-            let mut p = new(&mut l);
-            let program = p.parse_program();
-
-            assert_eq!(p.errors.len(), 0);
-            assert_eq!(program.stmts.len(), 1);
-
+            let program = test_parse_program(&test.input);
             let stmt = &program.stmts[0];
             let stmt_str = format!("{}", stmt);
             assert_eq!(stmt_str, test.expected);
         }
+    }
+
+    fn test_parse_program(input: &str) -> Program {
+        let mut l = lexer::new(input);
+        let mut p = new(&mut l);
+        let program = p.parse_program();
+        assert_eq!(p.errors.len(), 0);
+        program
+    }
+
+    fn test_expr_stmt(stmt: &Stmt) -> &ExprStmt {
+        return match stmt {
+            Stmt::ExprStmt(es) => es,
+            _ => panic!("We parsed other than expression statement."),
+        };
     }
 
     fn test_int(n: &Expr, expected: isize) {
