@@ -3,6 +3,8 @@ mod token;
 mod lexer;
 mod parser;
 mod ast;
+mod eval;
+mod object;
 
 fn main() {
     let prompt = ">> ";
@@ -17,7 +19,8 @@ fn main() {
         let mut p = parser::new(&mut l);
 
         let program = p.parse_program();
-
-        println!("{}", program);
+        let root_node = ast::Node::Program(program);
+        let evaled = eval::eval(root_node);
+        println!("{}", evaled);
     }
 }
