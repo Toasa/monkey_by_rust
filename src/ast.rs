@@ -2,7 +2,7 @@ use crate::token;
 use std::fmt;
 
 #[allow(dead_code)]
-enum Node {
+pub enum Node {
     Program(Program),
     Stmt(Stmt),
     Expr(Expr),
