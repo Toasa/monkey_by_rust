@@ -69,6 +69,10 @@ pub fn eval_infix_expr(op: &str, lhs: &Object, rhs: &Object) -> Object {
         "-" => Object::Int(Int { val: lval - rval }),
         "*" => Object::Int(Int { val: lval * rval }),
         "/" => Object::Int(Int { val: lval / rval }),
+        "<" => Object::Bool(Bool { val: lval < rval }),
+        ">" => Object::Bool(Bool { val: lval > rval }),
+        "==" => Object::Bool(Bool { val: lval == rval }),
+        "!=" => Object::Bool(Bool { val: lval != rval }),
         _ => Object::Null(Null {}),
     }
 }
@@ -134,6 +138,14 @@ mod test {
         let tests: Vec<Test> = vec! [
             Test { input: "true", expected: true },
             Test { input: "false", expected: false },
+            Test { input: "1 < 2", expected: true },
+            Test { input: "1 > 2", expected: false },
+            Test { input: "1 < 1", expected: false },
+            Test { input: "1 < 1", expected: false },
+            Test { input: "1 == 1", expected: true },
+            Test { input: "1 != 1", expected: false },
+            Test { input: "1 == 2", expected: false },
+            Test { input: "1 != 2", expected: true },
         ];
 
         for test in tests.iter() {
