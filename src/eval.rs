@@ -2,6 +2,7 @@ use crate::object::{
     Object,
     Int,
     Bool,
+    Null,
 };
 use crate::ast;
 
@@ -32,8 +33,27 @@ pub fn eval_expr(expr: &ast::Expr) -> Object {
     return match expr {
         ast::Expr::Int(n) => Object::Int(Int { val: n.val }),
         ast::Expr::Bool(b) => Object::Bool(Bool { val: b.val }),
+        ast::Expr::Prefix(p) => {
+            let rhs = eval_expr(&*p.rhs);
+            eval_prefix_expr(&p.op, &rhs)
+        },
         _ => panic!("Unsupported expression"),
     }
+}
+
+pub fn eval_prefix_expr(op: &str, rhs: &Object) -> Object {
+    return match op {
+        "!" => eval_bang(rhs),
+        _ => Object::Null(Null {}),
+    };
+}
+
+pub fn eval_bang(rhs: &Object) -> Object {
+    return match rhs {
+        Object::Bool(b) => Object::Bool(Bool { val: !b.val }),
+        Object::Null(_) => Object::Bool(Bool { val: true }),
+        _ => Object::Bool(Bool { val: false }),
+    };
 }
 
 #[cfg(test)]
@@ -70,6 +90,28 @@ mod test {
         let tests: Vec<Test> = vec! [
             Test { input: "true", expected: true },
             Test { input: "false", expected: false },
+        ];
+
+        for test in tests.iter() {
+            let evaled = test_eval(test.input);
+            test_bool(evaled, test.expected);
+        }
+    }
+
+    #[test]
+    fn eval_bang() {
+        struct Test<'a> {
+            input: &'a str,
+            expected: bool,
+        }
+
+        let tests: Vec<Test> = vec! [
+            Test { input: "!true", expected: false },
+            Test { input: "!false", expected: true },
+            Test { input: "!!true", expected: true },
+            Test { input: "!!false", expected: false },
+            Test { input: "!5", expected: false },
+            Test { input: "!!5", expected: true },
         ];
 
         for test in tests.iter() {
