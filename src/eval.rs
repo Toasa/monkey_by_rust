@@ -1,6 +1,7 @@
 use crate::object::{
     Object,
     Int,
+    Bool,
 };
 use crate::ast;
 
@@ -30,6 +31,7 @@ pub fn eval_stmt(stmt: &ast::Stmt) -> Object {
 pub fn eval_expr(expr: &ast::Expr) -> Object {
     return match expr {
         ast::Expr::Int(n) => Object::Int(Int { val: n.val }),
+        ast::Expr::Boolean(b) => Object::Bool(Bool { val: b.val }),
         _ => panic!("Unsupported expression"),
     }
 }
@@ -58,6 +60,24 @@ mod test {
         }
     }
 
+    #[test]
+    fn eval_bool() {
+        struct Test<'a> {
+            input: &'a str,
+            expected: bool,
+        }
+
+        let tests: Vec<Test> = vec! [
+            Test { input: "true", expected: true },
+            Test { input: "false", expected: false },
+        ];
+
+        for test in tests.iter() {
+            let evaled = test_eval(test.input);
+            test_bool(evaled, test.expected);
+        }
+    }
+
     fn test_eval(input: &str) -> Object {
         let mut l = lexer::new(&input);
         let mut p = parser::new(&mut l);
@@ -69,6 +89,13 @@ mod test {
         match obj {
             Object::Int(i) => assert_eq!(i.val, expected),
             _ => panic!("We evaled other than integer."),
+        };
+    }
+
+    fn test_bool(obj: Object, expected: bool) {
+        match obj {
+            Object::Bool(b) => assert_eq!(b.val, expected),
+            _ => panic!("We evaled other than boolean."),
         };
     }
 }
