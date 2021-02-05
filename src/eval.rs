@@ -8,13 +8,13 @@ use crate::ast;
 
 pub fn eval(node: ast::Node) -> Object {
     return match node {
-        ast::Node::Program(p) => eval_stmts(p.stmts),
+        ast::Node::Program(p) => eval_stmts(&p.stmts),
         ast::Node::Stmt(s) => eval_stmt(&s),
         ast::Node::Expr(e) => eval_expr(&e),
     };
 }
 
-pub fn eval_stmts(stmts: Vec<ast::Stmt>) -> Object {
+pub fn eval_stmts(stmts: &Vec<ast::Stmt>) -> Object {
     let mut result = eval_stmt(&stmts[0]);
     for stmt in stmts.iter() {
         result = eval_stmt(stmt);
@@ -25,6 +25,7 @@ pub fn eval_stmts(stmts: Vec<ast::Stmt>) -> Object {
 pub fn eval_stmt(stmt: &ast::Stmt) -> Object {
     return match stmt {
         ast::Stmt::ExprStmt(es) => eval_expr(&es.expr),
+        ast::Stmt::Block(b) => eval_stmts(&b.stmts),
         _ => panic!("Unsupported statement"),
     };
 }
@@ -42,6 +43,7 @@ pub fn eval_expr(expr: &ast::Expr) -> Object {
             let rhs = eval_expr(&*i.rhs);
             eval_infix_expr(&i.op, &lhs, &rhs)
         },
+        ast::Expr::If(i) => eval_if_expr(&i),
         _ => panic!("Unsupported expression"),
     }
 }
@@ -91,6 +93,26 @@ pub fn eval_prefix_minus(rhs: &Object) -> Object {
     return match rhs {
         Object::Int(i) => Object::Int(Int { val: -i.val }),
         _ => Object::Null(Null {}),
+    };
+}
+
+pub fn eval_if_expr(i: &ast::If) -> Object {
+    let cond = eval_expr(&i.cond);
+    if is_truthy(&cond) {
+        eval_stmt(&ast::Stmt::Block(i.cons.clone()))
+    } else {
+        match &i.alt {
+            Some(alt) => eval_stmt(&ast::Stmt::Block(alt.clone())),
+            None => Object::Null(Null {}),
+        }
+    }
+}
+
+fn is_truthy(obj: &Object) -> bool {
+    return match obj {
+        Object::Null(_) => false,
+        Object::Bool(b) => b.val,
+        _ => true,
     };
 }
 
@@ -187,6 +209,36 @@ mod test {
         }
     }
 
+    #[test]
+    fn eval_if() {
+        struct Test<'a> {
+            input: &'a str,
+            expected: isize,
+        }
+
+        let tests: Vec<Test> = vec! [
+            Test { input: "if (true) { 10 }", expected: 10 },
+            Test { input: "if (1) { 10 }", expected: 10 },
+            Test { input: "if (1 < 2) { 10 }", expected: 10 },
+            Test { input: "if (1 < 2) { 10 } else { 20 }", expected: 10 },
+            Test { input: "if (1 > 2) { 10 } else { 20 }", expected: 20 },
+        ];
+
+        for test in tests.iter() {
+            let evaled = test_eval(test.input);
+            test_int(evaled, test.expected);
+        }
+
+        let inputs = vec! [
+            "if (false) { 10 }",
+            "if (1 > 2) { 10 }",
+        ];
+        for input in inputs.iter() {
+            let evaled = test_eval(input);
+            test_null(evaled);
+        }
+    }
+
     fn test_eval(input: &str) -> Object {
         let mut l = lexer::new(&input);
         let mut p = parser::new(&mut l);
@@ -205,6 +257,13 @@ mod test {
         match obj {
             Object::Bool(b) => assert_eq!(b.val, expected),
             _ => panic!("We evaled other than boolean."),
+        };
+    }
+
+    fn test_null(obj: Object) {
+        match obj {
+            Object::Null(_) => return,
+            _ => panic!("We evaled other than null."),
         };
     }
 }
