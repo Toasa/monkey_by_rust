@@ -3,29 +3,54 @@ use crate::object::{
     Int,
     Bool,
     Null,
+    Return,
 };
 use crate::ast;
 
 pub fn eval(node: ast::Node) -> Object {
     return match node {
-        ast::Node::Program(p) => eval_stmts(&p.stmts),
+        ast::Node::Program(p) => eval_program(&p.stmts),
         ast::Node::Stmt(s) => eval_stmt(&s),
         ast::Node::Expr(e) => eval_expr(&e),
     };
 }
 
-pub fn eval_stmts(stmts: &Vec<ast::Stmt>) -> Object {
-    let mut result = eval_stmt(&stmts[0]);
+pub fn eval_program(stmts: &Vec<ast::Stmt>) -> Object {
+    let mut result = Object::Null(Null {});
+
     for stmt in stmts.iter() {
         result = eval_stmt(stmt);
+        match &result {
+            Object::Return(r) => return *(r.clone().val),
+            _ => (),
+        };
     }
+
+    result
+}
+
+pub fn eval_block(stmts: &Vec<ast::Stmt>) -> Object {
+    let mut result = Object::Null(Null {});
+
+    for stmt in stmts.iter() {
+        result = eval_stmt(stmt);
+        match &result {
+            Object::Return(r) => return Object::Return(r.clone()),
+            _ => (),
+        };
+    }
+
     result
 }
 
 pub fn eval_stmt(stmt: &ast::Stmt) -> Object {
     return match stmt {
         ast::Stmt::ExprStmt(es) => eval_expr(&es.expr),
-        ast::Stmt::Block(b) => eval_stmts(&b.stmts),
+        ast::Stmt::Block(b) => eval_block(&b.stmts),
+        ast::Stmt::Return(r) => {
+            let ret = eval_expr(&r.val);
+            Object::Return(Return { val: Box::new(ret) })
+        }
         _ => panic!("Unsupported statement"),
     };
 }
@@ -121,6 +146,37 @@ mod test {
     use super::*;
     use crate::lexer;
     use crate::parser;
+
+    #[test]
+    fn eval_return() {
+        struct Test<'a> {
+            input: &'a str,
+            expected: isize,
+        }
+
+        let tests: Vec<Test> = vec! [
+            Test { input: "return 10;", expected: 10 },
+            Test { input: "return 10; 11;", expected: 10 },
+            Test { input: "return 2 * 5; 11;", expected: 10 },
+            Test { input: "9; return 2 * 5; 11;", expected: 10 },
+            Test {
+                input: "
+                if (10 > 1) {
+                    if (10 > 1) {
+                        return 10;
+                    }
+                    return 1;
+                }",
+                expected: 10,
+            },
+        ];
+
+        for test in tests.iter() {
+            let evaled = test_eval(test.input);
+
+            test_int(evaled, test.expected);
+        }
+    }
 
     #[test]
     fn eval_int() {
