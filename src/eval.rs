@@ -6,20 +6,21 @@ use crate::object::{
     Return,
 };
 use crate::ast;
+use crate::env::Env;
 
-pub fn eval(node: ast::Node) -> Object {
+pub fn eval(node: ast::Node, env: &mut Env) -> Object {
     return match node {
-        ast::Node::Program(p) => eval_program(&p.stmts),
-        ast::Node::Stmt(s) => eval_stmt(&s),
-        ast::Node::Expr(e) => eval_expr(&e),
+        ast::Node::Program(p) => eval_program(&p.stmts, env),
+        ast::Node::Stmt(s) => eval_stmt(&s, env),
+        ast::Node::Expr(e) => eval_expr(&e, env),
     };
 }
 
-pub fn eval_program(stmts: &Vec<ast::Stmt>) -> Object {
+pub fn eval_program(stmts: &Vec<ast::Stmt>, env: &mut Env) -> Object {
     let mut result = Object::Null(Null {});
 
     for stmt in stmts.iter() {
-        result = eval_stmt(stmt);
+        result = eval_stmt(stmt, env);
         match &result {
             Object::Return(r) => return *(r.clone().val),
             _ => (),
@@ -29,11 +30,11 @@ pub fn eval_program(stmts: &Vec<ast::Stmt>) -> Object {
     result
 }
 
-pub fn eval_block(stmts: &Vec<ast::Stmt>) -> Object {
+pub fn eval_block(stmts: &Vec<ast::Stmt>, env: &mut Env) -> Object {
     let mut result = Object::Null(Null {});
 
     for stmt in stmts.iter() {
-        result = eval_stmt(stmt);
+        result = eval_stmt(stmt, env);
         match &result {
             Object::Return(r) => return Object::Return(r.clone()),
             _ => (),
@@ -43,45 +44,56 @@ pub fn eval_block(stmts: &Vec<ast::Stmt>) -> Object {
     result
 }
 
-pub fn eval_stmt(stmt: &ast::Stmt) -> Object {
+pub fn eval_stmt(stmt: &ast::Stmt, env: &mut Env) -> Object {
     return match stmt {
-        ast::Stmt::ExprStmt(es) => eval_expr(&es.expr),
-        ast::Stmt::Block(b) => eval_block(&b.stmts),
+        ast::Stmt::ExprStmt(es) => eval_expr(&es.expr, env),
+        ast::Stmt::Block(b) => eval_block(&b.stmts, env),
         ast::Stmt::Return(r) => {
-            let ret = eval_expr(&r.val);
+            let ret = eval_expr(&r.val, env);
             Object::Return(Return { val: Box::new(ret) })
-        }
-        _ => panic!("Unsupported statement"),
+        },
+        ast::Stmt::Let(l) => {
+            let val = eval_expr(&l.val, env);
+            env.set(l.name.val.clone(), val.clone());
+            val
+        },
     };
 }
 
-pub fn eval_expr(expr: &ast::Expr) -> Object {
+pub fn eval_expr(expr: &ast::Expr, env: &mut Env) -> Object {
     return match expr {
         ast::Expr::Int(n) => Object::Int(Int { val: n.val }),
         ast::Expr::Bool(b) => Object::Bool(Bool { val: b.val }),
         ast::Expr::Prefix(p) => {
-            let rhs = eval_expr(&*p.rhs);
-            eval_prefix_expr(&p.op, &rhs)
+            let rhs = eval_expr(&*p.rhs, env);
+            eval_prefix_expr(&p.op, &rhs, env)
         },
         ast::Expr::Infix(i) => {
-            let lhs = eval_expr(&*i.lhs);
-            let rhs = eval_expr(&*i.rhs);
-            eval_infix_expr(&i.op, &lhs, &rhs)
+            let lhs = eval_expr(&*i.lhs, env);
+            let rhs = eval_expr(&*i.rhs, env);
+            eval_infix_expr(&i.op, &lhs, &rhs, env)
         },
-        ast::Expr::If(i) => eval_if_expr(&i),
+        ast::Expr::If(i) => eval_if_expr(&i, env),
+        ast::Expr::Ident(i) => {
+            let val = env.get(i.val.clone());
+            match val {
+                Some(v) => v.clone(),
+                None => Object::Null(Null {}),
+            }
+        },
         _ => panic!("Unsupported expression"),
     }
 }
 
-pub fn eval_prefix_expr(op: &str, rhs: &Object) -> Object {
+pub fn eval_prefix_expr(op: &str, rhs: &Object, env: &mut Env) -> Object {
     return match op {
-        "!" => eval_prefix_bang(rhs),
-        "-" => eval_prefix_minus(rhs),
+        "!" => eval_prefix_bang(rhs, env),
+        "-" => eval_prefix_minus(rhs, env),
         _ => Object::Null(Null {}),
     };
 }
 
-pub fn eval_infix_expr(op: &str, lhs: &Object, rhs: &Object) -> Object {
+pub fn eval_infix_expr(op: &str, lhs: &Object, rhs: &Object, _env: &mut Env) -> Object {
     let lval = match lhs {
         Object::Int(n) => n.val,
         Object::Bool(b) => b.val as isize,
@@ -106,7 +118,7 @@ pub fn eval_infix_expr(op: &str, lhs: &Object, rhs: &Object) -> Object {
     }
 }
 
-pub fn eval_prefix_bang(rhs: &Object) -> Object {
+pub fn eval_prefix_bang(rhs: &Object, _env: &mut Env) -> Object {
     return match rhs {
         Object::Bool(b) => Object::Bool(Bool { val: !b.val }),
         Object::Null(_) => Object::Bool(Bool { val: true }),
@@ -114,20 +126,20 @@ pub fn eval_prefix_bang(rhs: &Object) -> Object {
     };
 }
 
-pub fn eval_prefix_minus(rhs: &Object) -> Object {
+pub fn eval_prefix_minus(rhs: &Object, _env: &mut Env) -> Object {
     return match rhs {
         Object::Int(i) => Object::Int(Int { val: -i.val }),
         _ => Object::Null(Null {}),
     };
 }
 
-pub fn eval_if_expr(i: &ast::If) -> Object {
-    let cond = eval_expr(&i.cond);
+pub fn eval_if_expr(i: &ast::If, env: &mut Env) -> Object {
+    let cond = eval_expr(&i.cond, env);
     if is_truthy(&cond) {
-        eval_stmt(&ast::Stmt::Block(i.cons.clone()))
+        eval_stmt(&ast::Stmt::Block(i.cons.clone()), env)
     } else {
         match &i.alt {
-            Some(alt) => eval_stmt(&ast::Stmt::Block(alt.clone())),
+            Some(alt) => eval_stmt(&ast::Stmt::Block(alt.clone()), env),
             None => Object::Null(Null {}),
         }
     }
@@ -146,6 +158,7 @@ mod test {
     use super::*;
     use crate::lexer;
     use crate::parser;
+    use crate::env;
 
     #[test]
     fn eval_return() {
@@ -173,7 +186,38 @@ mod test {
 
         for test in tests.iter() {
             let evaled = test_eval(test.input);
+            test_int(evaled, test.expected);
+        }
+    }
 
+    #[test]
+    fn eval_let() {
+        struct Test<'a> {
+            input: &'a str,
+            expected: isize,
+        }
+
+        let tests: Vec<Test> = vec! [
+            Test {
+                input: "let a = 5; a;",
+                expected: 5
+            },
+            Test {
+                input: "let a = 5 * 5; a;",
+                expected: 25
+            },
+            Test {
+                input: "let a = 5; let b = a; b;",
+                expected: 5
+            },
+            Test {
+                input: "let a = 5; let b = a; let c = a + b + 5; c;",
+                expected: 15
+            },
+        ];
+
+        for test in tests.iter() {
+            let evaled = test_eval(test.input);
             test_int(evaled, test.expected);
         }
     }
@@ -299,7 +343,8 @@ mod test {
         let mut l = lexer::new(&input);
         let mut p = parser::new(&mut l);
         let program = p.parse_program();
-        return eval(ast::Node::Program(program));
+        let mut env = env::new();
+        return eval(ast::Node::Program(program), &mut env);
     }
 
     fn test_int(obj: Object, expected: isize) {

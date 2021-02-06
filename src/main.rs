@@ -5,8 +5,11 @@ mod parser;
 mod ast;
 mod eval;
 mod object;
+mod env;
 
 fn main() {
+    let mut env = env::new();
+
     let prompt = ">> ";
     loop {
         print!("{}", prompt);
@@ -20,7 +23,8 @@ fn main() {
 
         let program = p.parse_program();
         let root_node = ast::Node::Program(program);
-        let evaled = eval::eval(root_node);
+
+        let evaled = eval::eval(root_node, &mut env);
         println!("{}", evaled);
     }
 }
