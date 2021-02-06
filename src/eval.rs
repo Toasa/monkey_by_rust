@@ -64,15 +64,8 @@ pub fn eval_expr(expr: &ast::Expr, env: &mut Env) -> Object {
     return match expr {
         ast::Expr::Int(n) => Object::Int(Int { val: n.val }),
         ast::Expr::Bool(b) => Object::Bool(Bool { val: b.val }),
-        ast::Expr::Prefix(p) => {
-            let rhs = eval_expr(&*p.rhs, env);
-            eval_prefix_expr(&p.op, &rhs, env)
-        },
-        ast::Expr::Infix(i) => {
-            let lhs = eval_expr(&*i.lhs, env);
-            let rhs = eval_expr(&*i.rhs, env);
-            eval_infix_expr(&i.op, &lhs, &rhs, env)
-        },
+        ast::Expr::Prefix(p) => eval_prefix_expr(&p, env),
+        ast::Expr::Infix(i) => eval_infix_expr(&i, env),
         ast::Expr::If(i) => eval_if_expr(&i, env),
         ast::Expr::Ident(i) => {
             let val = env.get(i.val.clone());
@@ -85,15 +78,19 @@ pub fn eval_expr(expr: &ast::Expr, env: &mut Env) -> Object {
     }
 }
 
-pub fn eval_prefix_expr(op: &str, rhs: &Object, env: &mut Env) -> Object {
-    return match op {
-        "!" => eval_prefix_bang(rhs, env),
-        "-" => eval_prefix_minus(rhs, env),
+pub fn eval_prefix_expr(p: &ast::Prefix, env: &mut Env) -> Object {
+    let rhs = eval_expr(&*p.rhs, env);
+    return match p.op.as_str() {
+        "!" => eval_prefix_bang(&rhs, env),
+        "-" => eval_prefix_minus(&rhs, env),
         _ => Object::Null(Null {}),
     };
 }
 
-pub fn eval_infix_expr(op: &str, lhs: &Object, rhs: &Object, _env: &mut Env) -> Object {
+pub fn eval_infix_expr(i: &ast::Infix, env: &mut Env) -> Object {
+    let lhs = eval_expr(&i.lhs, env);
+    let rhs = eval_expr(&i.rhs, env);
+
     let lval = match lhs {
         Object::Int(n) => n.val,
         Object::Bool(b) => b.val as isize,
@@ -105,7 +102,7 @@ pub fn eval_infix_expr(op: &str, lhs: &Object, rhs: &Object, _env: &mut Env) -> 
         _ => return Object::Null(Null {}),
     };
 
-    return match op {
+    return match i.op.as_str() {
         "+" => Object::Int(Int { val: lval + rval }),
         "-" => Object::Int(Int { val: lval - rval }),
         "*" => Object::Int(Int { val: lval * rval }),
