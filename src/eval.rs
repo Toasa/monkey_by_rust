@@ -69,13 +69,7 @@ pub fn eval_expr(expr: &ast::Expr, env: &mut Env) -> Object {
         ast::Expr::Infix(i) => eval_infix_expr(&i, env),
         ast::Expr::If(i) => eval_if_expr(&i, env),
         ast::Expr::Func(f) => eval_func(f.clone(), env),
-        ast::Expr::Ident(i) => {
-            let val = env.get(i.val.clone());
-            match val {
-                Some(v) => v.clone(),
-                None => Object::Null(Null {}),
-            }
-        },
+        ast::Expr::Ident(i) => eval_ident(&i, env),
         _ => panic!("Unsupported expression"),
     }
 }
@@ -130,6 +124,14 @@ pub fn eval_prefix_minus(rhs: &Object, _env: &mut Env) -> Object {
         Object::Int(i) => Object::Int(Int { val: -i.val }),
         _ => Object::Null(Null {}),
     };
+}
+
+pub fn eval_ident(i: &ast::Ident, env: &mut Env) -> Object {
+    let val = env.get(i.val.clone());
+    match val {
+        Some(v) => v.clone(),
+        None => Object::Null(Null {}),
+    }
 }
 
 pub fn eval_if_expr(i: &ast::If, env: &mut Env) -> Object {
