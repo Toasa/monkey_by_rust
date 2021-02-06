@@ -4,6 +4,7 @@ use crate::object::{
     Bool,
     Null,
     Return,
+    Func,
 };
 use crate::ast;
 use crate::env::Env;
@@ -67,6 +68,7 @@ pub fn eval_expr(expr: &ast::Expr, env: &mut Env) -> Object {
         ast::Expr::Prefix(p) => eval_prefix_expr(&p, env),
         ast::Expr::Infix(i) => eval_infix_expr(&i, env),
         ast::Expr::If(i) => eval_if_expr(&i, env),
+        ast::Expr::Func(f) => eval_func(f.clone(), env),
         ast::Expr::Ident(i) => {
             let val = env.get(i.val.clone());
             match val {
@@ -140,6 +142,14 @@ pub fn eval_if_expr(i: &ast::If, env: &mut Env) -> Object {
             None => Object::Null(Null {}),
         }
     }
+}
+
+pub fn eval_func(f: ast::Func, env: &mut Env) -> Object {
+    return Object::Func(Func {
+        params: f.params,
+        body: f.body,
+        env: env.clone(),
+    });
 }
 
 fn is_truthy(obj: &Object) -> bool {
@@ -334,6 +344,20 @@ mod test {
             let evaled = test_eval(input);
             test_null(evaled);
         }
+    }
+
+    #[test]
+    fn eval_func() {
+        let input = "fn(x) { x + 2; };";
+        let evaled = test_eval(input);
+        let f = match evaled {
+            Object::Func(f) => f,
+            _ => panic!("We evaled other than function"),
+        };
+
+        assert_eq!(f.params.len(), 1);
+        assert_eq!(f.params[0].val, "x");
+        assert_eq!(format!("{}", f.body), "(x + 2)");
     }
 
     fn test_eval(input: &str) -> Object {
