@@ -69,9 +69,20 @@ pub fn eval_expr(expr: &ast::Expr, env: &mut Env) -> Object {
         ast::Expr::Infix(i) => eval_infix_expr(&i, env),
         ast::Expr::If(i) => eval_if_expr(&i, env),
         ast::Expr::Func(f) => eval_func(f.clone(), env),
+        ast::Expr::Call(c) => eval_call(&c, env),
         ast::Expr::Ident(i) => eval_ident(&i, env),
-        _ => panic!("Unsupported expression"),
     }
+}
+
+pub fn eval_exprs(args: &Vec<ast::Expr>, env: &mut Env) -> Vec<Object> {
+    let mut exprs: Vec<Object> = vec![];
+
+    for arg in args.iter() {
+        let expr = eval_expr(arg, env);
+        exprs.push(expr);
+    }
+
+    exprs
 }
 
 pub fn eval_prefix_expr(p: &ast::Prefix, env: &mut Env) -> Object {
@@ -152,6 +163,21 @@ pub fn eval_func(f: ast::Func, env: &mut Env) -> Object {
         body: f.body,
         env: env.clone(),
     });
+}
+
+pub fn eval_call(c: &ast::Call, env: &mut Env) -> Object {
+    let mut f = match eval_expr(&*c.func, env) {
+        Object::Func(f) => f,
+        _ => return Object::Null(Null {}),
+    };
+
+    let args = eval_exprs(&c.args, env);
+    for (i, arg) in args.iter().enumerate() {
+        let param = &f.params[i];
+        f.env.set(param.val.clone(), arg.clone());
+    }
+
+    eval_block(&f.body.stmts, &mut f.env)
 }
 
 fn is_truthy(obj: &Object) -> bool {
@@ -360,6 +386,52 @@ mod test {
         assert_eq!(f.params.len(), 1);
         assert_eq!(f.params[0].val, "x");
         assert_eq!(format!("{}", f.body), "(x + 2)");
+    }
+
+    #[test]
+    fn eval_call() {
+        struct Test<'a> {
+            input: &'a str,
+            expected: isize,
+        }
+
+        let tests: Vec<Test> = vec! [
+            Test {
+                input: "let id = fn(x) { x; }; id(5);",
+                expected: 5
+            },
+            Test {
+                input: "let id = fn(x) { return x; }; id(5);",
+                expected: 5
+            },
+            Test {
+                input: "let double = fn(x) { x * 2; }; double(5);",
+                expected: 10
+            },
+            Test {
+                input: "let add = fn(x, y) { x + y; }; add(5, 3);",
+                expected: 8
+            },
+            Test {
+                input: "let add = fn(x, y) { x + y; }; add(add(5, 5), 3);",
+                expected: 13
+            },
+            Test {
+                input: "fn(x) { x; }(5)",
+                expected: 5
+            },
+            Test {
+                input: "let newAdder = fn(x) { fn(y) { x + y }; };
+                        let addTwo = newAdder(2);
+                        addTwo(2);",
+                expected: 4
+            },
+        ];
+
+        for test in tests.iter() {
+            let evaled = test_eval(test.input);
+            test_int(evaled, test.expected);
+        }
     }
 
     fn test_eval(input: &str) -> Object {
