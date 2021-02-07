@@ -11,13 +11,14 @@ use crate::env::Env;
 
 pub fn eval(node: ast::Node, env: &mut Env) -> Object {
     return match node {
-        ast::Node::Program(p) => eval_program(&p.stmts, env),
+        ast::Node::Program(p) => eval_program(&p, env),
         ast::Node::Stmt(s) => eval_stmt(&s, env),
         ast::Node::Expr(e) => eval_expr(&e, env),
     };
 }
 
-pub fn eval_program(stmts: &Vec<ast::Stmt>, env: &mut Env) -> Object {
+pub fn eval_program(p: &ast::Program, env: &mut Env) -> Object {
+    let stmts = &p.stmts;
     let mut result = Object::Null(Null {});
 
     for stmt in stmts.iter() {
@@ -31,7 +32,8 @@ pub fn eval_program(stmts: &Vec<ast::Stmt>, env: &mut Env) -> Object {
     result
 }
 
-pub fn eval_block(stmts: &Vec<ast::Stmt>, env: &mut Env) -> Object {
+pub fn eval_block(b: &ast::Block, env: &mut Env) -> Object {
+    let stmts = &b.stmts;
     let mut result = Object::Null(Null {});
 
     for stmt in stmts.iter() {
@@ -48,7 +50,7 @@ pub fn eval_block(stmts: &Vec<ast::Stmt>, env: &mut Env) -> Object {
 pub fn eval_stmt(stmt: &ast::Stmt, env: &mut Env) -> Object {
     return match stmt {
         ast::Stmt::ExprStmt(es) => eval_expr(&es.expr, env),
-        ast::Stmt::Block(b) => eval_block(&b.stmts, env),
+        ast::Stmt::Block(b) => eval_block(&b, env),
         ast::Stmt::Return(r) => {
             let ret = eval_expr(&r.val, env);
             Object::Return(Return { val: Box::new(ret) })
@@ -177,7 +179,7 @@ pub fn eval_call(c: &ast::Call, env: &mut Env) -> Object {
         f.env.set(param.val.clone(), arg.clone());
     }
 
-    eval_block(&f.body.stmts, &mut f.env)
+    eval_block(&f.body, &mut f.env)
 }
 
 fn is_truthy(obj: &Object) -> bool {
